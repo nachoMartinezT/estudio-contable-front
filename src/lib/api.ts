@@ -59,7 +59,7 @@ export const documentosApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
   getByClient: (clientId: string) =>
-    api.get(`/api/v1/documents/client/${clientId}`),
+    api.get('/api/v1/documents', { params: { from: 'client' } }),
   download: (id: string) =>
     api.get(`/api/v1/documents/${id}/download`, { responseType: 'blob' }),
   delete: (id: string) => api.delete(`/api/v1/documents/${id}`),
@@ -111,6 +111,8 @@ export const adminApi = {
 };
 
 export const tenantApi = {
+  getStaff: () =>
+    api.get('/api/v1/tenants/staff'),
   getUsers: (tenantId: string) =>
     api.get(`/api/v1/tenants/${tenantId}/users`),
   createUser: (tenantId: string, data: any) =>
@@ -123,11 +125,11 @@ export const tenantApi = {
 
 export const auditApi = {
   getLogs: (params?: { page?: number; limit?: number; accion?: string }) =>
-    api.get('/api/v1/audit/logs', { params }),
+    api.get('/api/v1/audit', { params }),
 };
 
 export const dashboardApi = {
-  getStats: () => api.get('/api/v1/dashboard/stats'),
+  getStats: () => api.get('/api/v1/dashboard'),
 };
 
 export const reportsApi = {

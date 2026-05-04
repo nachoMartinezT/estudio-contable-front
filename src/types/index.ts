@@ -1,11 +1,13 @@
 export interface User {
-  id: string;
+  id: number | string;
   email: string;
   nombre: string;
+  apellido?: string;
   rol: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'CLIENT';
-  tenantId: string;
+  tenantId: number | string;
+  tenantName?: string;
   perms: string[];
-  clientId?: string;
+  clientId?: number | string;
 }
 
 export interface AuthResponse {
@@ -79,7 +81,7 @@ export interface Tenant {
 }
 
 export interface Cliente {
-  id: string;
+  id: number | string;
   nombre: string;
   tipoDocumento: 'DNI' | 'CUIT' | 'CUIL' | 'PASAPORTE';
   numeroDocumento: string;
@@ -87,15 +89,15 @@ export interface Cliente {
   telefono: string;
   direccion: string;
   estado: 'ACTIVO' | 'INACTIVO';
-  tenantId: string;
+  tenantId: number | string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Factura {
-  id: string;
+  id: number | string;
   numero: string;
-  clienteId: string;
+  clienteId: number | string;
   clienteNombre: string;
   fechaEmision: string;
   fechaVencimiento: string;
@@ -107,8 +109,20 @@ export interface Factura {
   estado: 'PENDIENTE' | 'PAGADA' | 'ANULADA' | 'ENVIADA_AFIP';
   afipCAE?: string;
   afipFechaVencimientoCAE?: string;
-  tenantId: string;
+  tenantId: number | string;
   createdAt: string;
+}
+
+export interface DashboardStats {
+  cantidadClientes: number;
+  totalFacturado: number;
+  ultimosMovimientos?: Array<{
+    id: number;
+    description: string;
+    amount: number;
+    createdAt: string;
+    type: string;
+  }>;
 }
 
 export interface PDFRequest {
@@ -134,14 +148,4 @@ export interface AuditLog {
   ipAddress: string;
   userAgent: string;
   timestamp: string;
-}
-
-export interface DashboardStats {
-  totalClientes: number;
-  totalFacturas: number;
-  facturasPendientes: number;
-  facturasPagadas: number;
-  ingresosMes: number;
-  ingresosAnterior: number;
-  variacionIngresos: number;
 }

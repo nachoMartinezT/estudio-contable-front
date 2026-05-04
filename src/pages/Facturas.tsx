@@ -10,7 +10,7 @@ const Facturas: React.FC = () => {
 
   const { data: facturas, isLoading } = useQuery<Factura[]>({
     queryKey: ['facturas'],
-        queryFn: () => invoicesApi.getAll().then(res => res.data),
+    queryFn: () => invoicesApi.getAll().then(res => res.data),
   });
 
   const filteredFacturas = facturas?.filter(factura => {
@@ -26,15 +26,15 @@ const Facturas: React.FC = () => {
   const getEstadoBadge = (estado: string) => {
     switch (estado) {
       case 'PENDIENTE':
-        return <span className="badge-warning">Pendiente</span>;
+        return <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pendiente</span>;
       case 'PAGADA':
-        return <span className="badge-success">Pagada</span>;
+        return <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Pagada</span>;
       case 'ANULADA':
-        return <span className="badge-error">Anulada</span>;
+        return <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Anulada</span>;
       case 'ENVIADA_AFIP':
-        return <span className="badge-success bg-blue-100 text-blue-800">AFIP</span>;
+        return <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">AFIP</span>;
       default:
-        return <span className="badge-warning">{estado}</span>;
+        return <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">{estado}</span>;
     }
   };
 
@@ -66,7 +66,6 @@ const Facturas: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Facturas</h1>
@@ -78,7 +77,6 @@ const Facturas: React.FC = () => {
         </button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <p className="text-sm text-gray-500">Total Facturas</p>
@@ -94,7 +92,6 @@ const Facturas: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex items-center space-x-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -123,7 +120,6 @@ const Facturas: React.FC = () => {
         </button>
       </div>
 
-      {/* Facturas Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -140,17 +136,9 @@ const Facturas: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {isLoading ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-gray-500">
-                    Cargando facturas...
-                  </td>
-                </tr>
+                <tr><td colSpan={7} className="py-8 text-center text-gray-500">Cargando facturas...</td></tr>
               ) : filteredFacturas?.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-gray-500">
-                    No se encontraron facturas
-                  </td>
-                </tr>
+                <tr><td colSpan={7} className="py-8 text-center text-gray-500">No se encontraron facturas</td></tr>
               ) : (
                 filteredFacturas?.map((factura) => (
                   <tr key={factura.id} className="hover:bg-gray-50">
@@ -162,29 +150,19 @@ const Facturas: React.FC = () => {
                         )}
                       </div>
                     </td>
+                    <td className="py-4 px-4"><p className="text-gray-900">{factura.clienteNombre}</p></td>
                     <td className="py-4 px-4">
-                      <p className="text-gray-900">{factura.clienteNombre}</p>
+                      <p className="text-gray-900">{new Date(factura.fechaEmision).toLocaleDateString('es-AR')}</p>
+                      <p className="text-sm text-gray-500">Vto: {new Date(factura.fechaVencimiento).toLocaleDateString('es-AR')}</p>
                     </td>
                     <td className="py-4 px-4">
-                      <p className="text-gray-900">
-                        {new Date(factura.fechaEmision).toLocaleDateString('es-AR')}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Vto: {new Date(factura.fechaVencimiento).toLocaleDateString('es-AR')}
-                      </p>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
-                        {getTipoFactura(factura.tipo)}
-                      </span>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">{getTipoFactura(factura.tipo)}</span>
                     </td>
                     <td className="py-4 px-4">
                       <p className="font-bold text-gray-900">{formatCurrency(factura.total)}</p>
                       <p className="text-sm text-gray-500">{factura.moneda}</p>
                     </td>
-                    <td className="py-4 px-4">
-                      {getEstadoBadge(factura.estado)}
-                    </td>
+                    <td className="py-4 px-4">{getEstadoBadge(factura.estado)}</td>
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-2">
                         <button className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Ver">
@@ -211,19 +189,16 @@ const Facturas: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500">
           Mostrando {filteredFacturas?.length || 0} facturas
         </div>
         <div className="flex items-center space-x-4">
-          <button className="btn-secondary">
-            <Download className="mr-2" size={16} />
-            Exportar CSV
+          <button className="btn-secondary flex items-center space-x-2">
+            <Download size={16} /><span>Exportar CSV</span>
           </button>
-          <button className="btn-primary">
-            <Send className="mr-2" size={16} />
-            Enviar Lote AFIP
+          <button className="btn-primary flex items-center space-x-2">
+            <Send size={16} /><span>Enviar Lote AFIP</span>
           </button>
         </div>
       </div>

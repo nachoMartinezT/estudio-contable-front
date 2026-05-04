@@ -34,12 +34,11 @@ const Empleados: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState('');
 
   const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ['tenantUsers', tenantId],
-    queryFn: () => tenantApi.getUsers(tenantId).then((res) => res.data),
-    enabled: !!tenantId,
+    queryKey: ['tenantStaff'],
+    queryFn: () => tenantApi.getStaff().then((res) => res.data),
   });
 
-  const staffUsers = users?.filter((u) => u.rol === 'STAFF') || [];
+  const staffUsers = users || [];
 
   const { data: permissions, isLoading: permsLoading } = useQuery<StaffPermissions>({
     queryKey: ['staffPermissions', tenantId, selectedEmployeeId],

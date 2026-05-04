@@ -39,7 +39,6 @@ const Sidebar: React.FC = () => {
     if (user.rol === 'ADMIN' || user.rol === 'STAFF') {
       navItems.push({ path: '/clientes', icon: <Users size={20} />, label: 'Clientes' });
       navItems.push({ path: '/facturas', icon: <FileText size={20} />, label: 'Facturas' });
-      navItems.push({ path: '/documentos', icon: <FolderOpen size={20} />, label: 'Documentos' });
 
       const canViewInvoices = user.rol === 'ADMIN' || user.perms?.includes('canViewInvoices');
       if (canViewInvoices) {

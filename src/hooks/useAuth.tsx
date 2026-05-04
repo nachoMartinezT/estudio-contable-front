@@ -19,6 +19,32 @@ export const useAuth = () => {
   return context;
 };
 
+function decodeJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+}
+
+function mapUserFromMeResponse(meData: any, jwtPayload: Record<string, any> | null): User {
+  return {
+    id: meData.id,
+    email: meData.email,
+    nombre: meData.nombre,
+    apellido: meData.apellido,
+    rol: (meData.role || jwtPayload?.role?.replace('ROLE_', '') || 'STAFF') as User['rol'],
+    tenantId: meData.tenantId,
+    tenantName: meData.tenantName,
+    perms: jwtPayload?.perms || [],
+    clientId: meData.clientId,
+  };
+}
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -32,7 +58,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (token) {
       authApi.me()
         .then(response => {
-          setUser(response.data);
+          const jwtPayload = decodeJwtPayload(token);
+          setUser(mapUserFromMeResponse(response.data, jwtPayload));
         })
         .catch(() => {
           localStorage.removeItem('auth_token');
@@ -52,8 +79,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       localStorage.setItem('auth_token', token);
 
+      const jwtPayload = decodeJwtPayload(token);
       const meResponse = await authApi.me();
-      setUser(meResponse.data);
+      setUser(mapUserFromMeResponse(meResponse.data, jwtPayload));
     } catch (error) {
       console.error('Login error:', error);
       throw error;

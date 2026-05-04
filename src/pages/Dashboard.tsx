@@ -10,44 +10,47 @@ const Dashboard: React.FC = () => {
     queryFn: () => dashboardApi.getStats().then(res => res.data),
   });
 
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
+
   const statCards = [
     {
       title: 'Total Clientes',
-      value: stats?.totalClientes || 0,
+      value: stats?.cantidadClientes ?? 0,
       icon: <Users className="text-blue-600" size={24} />,
       color: 'bg-blue-50',
-      change: '+12% desde el mes pasado',
+      change: 'Clientes registrados',
     },
     {
-      title: 'Facturas Activas',
-      value: stats?.totalFacturas || 0,
-      icon: <FileText className="text-green-600" size={24} />,
-      color: 'bg-green-50',
-      change: `${stats?.facturasPendientes || 0} pendientes`,
-    },
-    {
-      title: 'Ingresos del Mes',
-      value: `$${(stats?.ingresosMes || 0).toLocaleString('es-AR')}`,
+      title: 'Total Facturado',
+      value: stats?.totalFacturado ? formatCurrency(stats.totalFacturado) : '$0',
       icon: <DollarSign className="text-purple-600" size={24} />,
       color: 'bg-purple-50',
-      change: `${(stats?.variacionIngresos || 0) > 0 ? '+' : ''}${stats?.variacionIngresos || 0}% vs mes anterior`,
+      change: 'Facturación acumulada',
     },
     {
-      title: 'Facturas Pagadas',
-      value: stats?.facturasPagadas || 0,
+      title: 'Últimos Movimientos',
+      value: stats?.ultimosMovimientos?.length ?? 0,
       icon: <TrendingUp className="text-orange-600" size={24} />,
       color: 'bg-orange-50',
-      change: '87% tasa de cobro',
+      change: 'Movimientos recientes',
+    },
+    {
+      title: 'Facturas Pendientes',
+      value: Math.max(0, (stats?.ultimosMovimientos?.length ?? 0) - (stats?.ultimosMovimientos?.filter(m => m.type?.includes('PAGO')).length ?? 0)),
+      icon: <FileText className="text-green-600" size={24} />,
+      color: 'bg-green-50',
+      change: 'Por cobrar',
     },
   ];
 
-  const recentActivities = [
-    { id: 1, user: 'María González', action: 'creó factura', target: '#FAC-2024-00123', time: 'Hace 5 minutos' },
-    { id: 2, user: 'Carlos López', action: 'actualizó cliente', target: 'Tech Solutions SA', time: 'Hace 15 minutos' },
-    { id: 3, user: 'Ana Martínez', action: 'generó reporte PDF', target: 'Balance Mensual', time: 'Hace 1 hora' },
-    { id: 4, user: 'Pedro Sánchez', action: 'envió a AFIP', target: '#FAC-2024-00122', time: 'Hace 2 horas' },
-    { id: 5, user: 'Laura Fernández', action: 'creó cliente nuevo', target: 'Global Logistics', time: 'Hace 3 horas' },
-  ];
+  const recentActivities = (stats?.ultimosMovimientos || []).slice(0, 5).map((mov, idx) => ({
+    id: mov.id || idx,
+    user: mov.type || 'Movimiento',
+    action: mov.description || 'Registrado',
+    target: formatCurrency(mov.amount),
+    time: mov.createdAt ? new Date(mov.createdAt).toLocaleDateString('es-AR') : '-',
+  }));
 
   return (
     <div className="space-y-6">
