@@ -13,8 +13,9 @@ const TAB_MP = 'mp';
 
 const tenantSchema = z.object({
   nombreEstudio: z.string().min(3, 'Nombre requerido'),
-  cuit: z.string().min(11, 'CUIT requerido'),
+  cuitEstudio: z.string().min(11, 'CUIT requerido'),
   nombreAdmin: z.string().min(2, 'Nombre del admin requerido'),
+  apellidoAdmin: z.string().min(2, 'Apellido del admin requerido'),
   emailAdmin: z.string().email('Email inválido'),
 });
 
@@ -237,13 +238,18 @@ const AdminPanel: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">CUIT *</label>
-                      <input type="text" {...createForm.register('cuit')} className="input-field" placeholder="30-12345678-9" />
-                      {createForm.formState.errors.cuit && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.cuit.message}</p>}
+                      <input type="text" {...createForm.register('cuitEstudio')} className="input-field" placeholder="30-12345678-9" />
+                      {createForm.formState.errors.cuitEstudio && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.cuitEstudio.message}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del administrador *</label>
-                      <input type="text" {...createForm.register('nombreAdmin')} className="input-field" placeholder="Juan Pérez" />
+                      <input type="text" {...createForm.register('nombreAdmin')} className="input-field" placeholder="Juan" />
                       {createForm.formState.errors.nombreAdmin && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.nombreAdmin.message}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Apellido del administrador *</label>
+                      <input type="text" {...createForm.register('apellidoAdmin')} className="input-field" placeholder="Pérez" />
+                      {createForm.formState.errors.apellidoAdmin && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.apellidoAdmin.message}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Email del administrador *</label>
