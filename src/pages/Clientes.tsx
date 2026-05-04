@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Filter, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { clientesApi } from '../lib/api';
+import { clientsApi } from '../lib/api';
 import { Cliente } from '../types';
 import ClienteFormModal from '../components/Clientes/ClienteFormModal';
 
@@ -13,11 +13,11 @@ const Clientes: React.FC = () => {
 
   const { data: clientes, isLoading } = useQuery<Cliente[]>({
     queryKey: ['clientes'],
-    queryFn: () => clientesApi.getAll().then(res => res.data),
+        queryFn: () => clientsApi.getAll().then(res => res.data),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => clientesApi.delete(id),
+        mutationFn: (id: string) => clientsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },

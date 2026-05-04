@@ -1,33 +1,68 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  FileSpreadsheet, 
-  FileBarChart, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  FolderOpen,
+  Wallet,
+  DollarSign,
+  FileBarChart,
+  Settings,
   LogOut,
   UserCircle,
-  Bell
+  Bell,
+  UserCog,
+  ShieldCheck,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
+interface NavItem {
+  path: string;
+  icon: React.ReactNode;
+  label: string;
+}
+
 const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
-  
-  const navItems = [
-    { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
-    { path: '/clientes', icon: <Users size={20} />, label: 'Clientes' },
-    { path: '/facturas', icon: <FileText size={20} />, label: 'Facturas' },
-    { path: '/pdf', icon: <FileSpreadsheet size={20} />, label: 'Documentos PDF' },
-    { path: '/auditoria', icon: <FileBarChart size={20} />, label: 'Auditoría' },
-    { path: '/configuracion', icon: <Settings size={20} />, label: 'Configuración' },
-  ];
-  
+
+  const navItems: NavItem[] = [];
+
+  if (user) {
+    navItems.push({ path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' });
+
+    if (user.rol === 'SUPER_ADMIN') {
+      navItems.push({ path: '/admin', icon: <ShieldCheck size={20} />, label: 'Panel de Administración' });
+    }
+
+    if (user.rol === 'ADMIN' || user.rol === 'STAFF') {
+      navItems.push({ path: '/clientes', icon: <Users size={20} />, label: 'Clientes' });
+      navItems.push({ path: '/facturas', icon: <FileText size={20} />, label: 'Facturas' });
+      navItems.push({ path: '/documentos', icon: <FolderOpen size={20} />, label: 'Documentos' });
+
+      const canViewInvoices = user.rol === 'ADMIN' || user.perms?.includes('canViewInvoices');
+      if (canViewInvoices) {
+        navItems.push({ path: '/cuenta-corriente', icon: <Wallet size={20} />, label: 'Cuenta Corriente' });
+        navItems.push({ path: '/honorarios', icon: <DollarSign size={20} />, label: 'Honorarios Recurrentes' });
+      }
+
+      navItems.push({ path: '/auditoria', icon: <FileBarChart size={20} />, label: 'Auditoría' });
+    }
+
+    if (user.rol === 'ADMIN') {
+      navItems.push({ path: '/empleados', icon: <UserCog size={20} />, label: 'Empleados' });
+      navItems.push({ path: '/configuracion', icon: <Settings size={20} />, label: 'Configuración' });
+    }
+
+    if (user.rol === 'CLIENT') {
+      navItems.push({ path: '/mi-cuenta', icon: <CreditCard size={20} />, label: 'Mi Cuenta' });
+      navItems.push({ path: '/mis-documentos', icon: <FolderOpen size={20} />, label: 'Mis Documentos' });
+    }
+  }
+
   return (
     <div className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col">
-      {/* Logo */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
@@ -39,8 +74,7 @@ const Sidebar: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* User Profile */}
+
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
@@ -55,9 +89,8 @@ const Sidebar: React.FC = () => {
           </button>
         </div>
       </div>
-      
-      {/* Navigation */}
-      <nav className="flex-1 p-4">
+
+      <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
           {navItems.map((item) => (
             <li key={item.path}>
@@ -78,8 +111,7 @@ const Sidebar: React.FC = () => {
           ))}
         </ul>
       </nav>
-      
-      {/* Logout */}
+
       <div className="p-4 border-t border-gray-200">
         <button
           onClick={logout}

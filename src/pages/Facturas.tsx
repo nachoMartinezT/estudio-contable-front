@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Search, Filter, FileText, Download, Send, MoreVertical } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { facturasApi } from '../lib/api';
+import { invoicesApi } from '../lib/api';
 import { Factura } from '../types';
 
 const Facturas: React.FC = () => {
@@ -10,7 +10,7 @@ const Facturas: React.FC = () => {
 
   const { data: facturas, isLoading } = useQuery<Factura[]>({
     queryKey: ['facturas'],
-    queryFn: () => facturasApi.getAll().then(res => res.data),
+        queryFn: () => invoicesApi.getAll().then(res => res.data),
   });
 
   const filteredFacturas = facturas?.filter(factura => {

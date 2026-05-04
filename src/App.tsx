@@ -3,21 +3,24 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import QueryProvider from './providers/QueryProvider';
 import { AuthProvider } from './hooks/useAuth';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import RoleRoute from './components/Auth/RoleRoute';
 
-// Auth Pages
 import Login from './components/Auth/Login';
-import Register from './components/Auth/Register';
 
-// Layout
 import Layout from './components/Layout/Layout';
 
-// Pages
 import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
 import Facturas from './pages/Facturas';
 import PDFGenerator from './pages/PDFGenerator';
 import Auditoria from './pages/Auditoria';
 import Configuracion from './pages/Configuracion';
+import CuentaCorriente from './pages/CuentaCorriente';
+import HonorariosRecurrentes from './pages/HonorariosRecurrentes';
+import Empleados from './pages/Empleados';
+import MiCuenta from './pages/MiCuenta';
+import MisDocumentos from './pages/MisDocumentos';
+import AdminPanel from './pages/AdminPanel';
 
 const App: React.FC = () => {
   return (
@@ -25,11 +28,8 @@ const App: React.FC = () => {
       <QueryProvider>
         <AuthProvider>
           <Routes>
-            {/* Public Routes */}
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            {/* Protected Routes */}
+
             <Route path="/" element={
               <ProtectedRoute>
                 <Layout />
@@ -37,14 +37,63 @@ const App: React.FC = () => {
             }>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-              <Route path="clientes" element={<Clientes />} />
-              <Route path="facturas" element={<Facturas />} />
-              <Route path="pdf" element={<PDFGenerator />} />
-              <Route path="auditoria" element={<Auditoria />} />
-              <Route path="configuracion" element={<Configuracion />} />
+              <Route path="clientes" element={
+                <RoleRoute allowedRoles={['ADMIN', 'STAFF']}>
+                  <Clientes />
+                </RoleRoute>
+              } />
+              <Route path="facturas" element={
+                <RoleRoute allowedRoles={['ADMIN', 'STAFF']}>
+                  <Facturas />
+                </RoleRoute>
+              } />
+              <Route path="pdf" element={
+                <RoleRoute allowedRoles={['ADMIN', 'STAFF']}>
+                  <PDFGenerator />
+                </RoleRoute>
+              } />
+              <Route path="cuenta-corriente" element={
+                <RoleRoute allowedRoles={['ADMIN', 'STAFF']} requiredPerms={['canViewInvoices']}>
+                  <CuentaCorriente />
+                </RoleRoute>
+              } />
+              <Route path="honorarios" element={
+                <RoleRoute allowedRoles={['ADMIN', 'STAFF']} requiredPerms={['canViewInvoices']}>
+                  <HonorariosRecurrentes />
+                </RoleRoute>
+              } />
+              <Route path="auditoria" element={
+                <RoleRoute allowedRoles={['ADMIN', 'STAFF']}>
+                  <Auditoria />
+                </RoleRoute>
+              } />
+              <Route path="empleados" element={
+                <RoleRoute allowedRoles={['ADMIN']}>
+                  <Empleados />
+                </RoleRoute>
+              } />
+              <Route path="configuracion" element={
+                <RoleRoute allowedRoles={['ADMIN']}>
+                  <Configuracion />
+                </RoleRoute>
+              } />
+              <Route path="mi-cuenta" element={
+                <RoleRoute allowedRoles={['CLIENT']}>
+                  <MiCuenta />
+                </RoleRoute>
+              } />
+              <Route path="mis-documentos" element={
+                <RoleRoute allowedRoles={['CLIENT']}>
+                  <MisDocumentos />
+                </RoleRoute>
+              } />
+              <Route path="admin" element={
+                <RoleRoute allowedRoles={['SUPER_ADMIN']}>
+                  <AdminPanel />
+                </RoleRoute>
+              } />
             </Route>
-            
-            {/* Fallback */}
+
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </AuthProvider>

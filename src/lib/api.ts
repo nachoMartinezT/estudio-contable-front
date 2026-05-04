@@ -31,53 +31,127 @@ api.interceptors.response.use(
 
 export const authApi = {
   login: (data: { email: string; password: string }) =>
-    api.post('/api/auth/login', data),
-  register: (data: { email: string; password: string; nombre: string }) =>
-    api.post('/api/auth/register', data),
-  me: () => api.get('/api/auth/me'),
+    api.post('/api/v1/auth/login', data),
+  me: () => api.get('/api/v1/auth/me'),
 };
 
-export const clientesApi = {
+export const clientsApi = {
   getAll: (params?: { page?: number; limit?: number; search?: string }) =>
-    api.get('/api/clientes', { params }),
-  getById: (id: string) => api.get(`/api/clientes/${id}`),
-  create: (data: any) => api.post('/api/clientes', data),
-  update: (id: string, data: any) => api.put(`/api/clientes/${id}`, data),
-  delete: (id: string) => api.delete(`/api/clientes/${id}`),
+    api.get('/api/v1/clients', { params }),
+  getById: (id: string) => api.get(`/api/v1/clients/${id}`),
+  create: (data: any) => api.post('/api/v1/clients', data),
+  update: (id: string, data: any) => api.put(`/api/v1/clients/${id}`, data),
+  delete: (id: string) => api.delete(`/api/v1/clients/${id}`),
 };
 
-export const facturasApi = {
+export const invoicesApi = {
   getAll: (params?: { page?: number; limit?: number; estado?: string }) =>
-    api.get('/api/facturas', { params }),
-  getById: (id: string) => api.get(`/api/facturas/${id}`),
-  create: (data: any) => api.post('/api/facturas', data),
-  emitir: (data: any) => api.post('/api/facturas/emitir', data),
-  anular: (id: string) => api.post(`/api/facturas/${id}/anular`),
-  enviarAFIP: (id: string) => api.post(`/api/facturas/${id}/enviar-afip`),
+    api.get('/api/v1/invoices', { params }),
+  getById: (id: string) => api.get(`/api/v1/invoices/${id}`),
+  create: (data: any) => api.post('/api/v1/invoices', data),
+  emitir: (data: any) => api.post('/api/v1/invoices/emitir', data),
+  anular: (id: string) => api.post(`/api/v1/invoices/${id}/anular`),
 };
 
-export const pdfApi = {
-  generarFactura: (facturaId: string) =>
-    api.post('/api/pdf/factura', { facturaId }),
-  generarPresupuesto: (data: any) =>
-    api.post('/api/pdf/presupuesto', data),
-  generarReporte: (data: any) =>
-    api.post('/api/pdf/reporte', data),
+export const documentosApi = {
+  upload: (formData: FormData) =>
+    api.post('/api/v1/documents/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  getByClient: (clientId: string) =>
+    api.get(`/api/v1/documents/client/${clientId}`),
+  download: (id: string) =>
+    api.get(`/api/v1/documents/${id}/download`, { responseType: 'blob' }),
+  delete: (id: string) => api.delete(`/api/v1/documents/${id}`),
+};
+
+export const ledgerApi = {
+  getBalance: (clientId: string) =>
+    api.get(`/api/v1/ledger/clients/${clientId}/balance`),
+  getMovements: (clientId: string) =>
+    api.get(`/api/v1/ledger/clients/${clientId}/movements`),
+  createMovement: (clientId: string, data: any) =>
+    api.post(`/api/v1/ledger/clients/${clientId}/movements`, data),
+  markPaid: (id: string) =>
+    api.put(`/api/v1/ledger/movements/${id}/mark-paid`),
+  getMyBalance: () =>
+    api.get('/api/v1/ledger/my/balance'),
+  getMyMovements: () =>
+    api.get('/api/v1/ledger/my/movements'),
+};
+
+export const feesApi = {
+  getRecurring: (clientId: string) =>
+    api.get(`/api/v1/fees/clients/${clientId}/recurring`),
+  saveRecurring: (clientId: string, data: any) =>
+    api.post(`/api/v1/fees/clients/${clientId}/recurring`, data),
+  getOverrides: (clientId: string) =>
+    api.get(`/api/v1/fees/clients/${clientId}/recurring/overrides`),
+  createOverride: (clientId: string, data: any) =>
+    api.post(`/api/v1/fees/clients/${clientId}/recurring/overrides`, data),
+  deleteOverride: (clientId: string, id: string) =>
+    api.delete(`/api/v1/fees/clients/${clientId}/recurring/overrides/${id}`),
+  generateNow: () =>
+    api.post('/api/v1/fees/generate-now'),
+};
+
+export const adminApi = {
+  getTenants: () =>
+    api.get('/api/v1/admin/tenants'),
+  createTenant: (data: any) =>
+    api.post('/api/v1/admin/tenants', data),
+  updateAfipConfig: (id: string, data: any) =>
+    api.put(`/api/v1/admin/tenants/${id}/afip-config`, data),
+  uploadCert: (id: string, formData: FormData) =>
+    api.post(`/api/v1/admin/tenants/${id}/cert`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  updateMpConfig: (id: string, data: any) =>
+    api.put(`/api/v1/admin/tenants/${id}/mp-config`, data),
+};
+
+export const tenantApi = {
+  getUsers: (tenantId: string) =>
+    api.get(`/api/v1/tenants/${tenantId}/users`),
+  createUser: (tenantId: string, data: any) =>
+    api.post(`/api/v1/tenants/${tenantId}/users`, data),
+  getPermissions: (tenantId: string, userId: string) =>
+    api.get(`/api/v1/tenants/${tenantId}/users/${userId}/permissions`),
+  updatePermissions: (tenantId: string, userId: string, data: any) =>
+    api.put(`/api/v1/tenants/${tenantId}/users/${userId}/permissions`, data),
 };
 
 export const auditApi = {
   getLogs: (params?: { page?: number; limit?: number; accion?: string }) =>
-    api.get('/api/audit/logs', { params }),
-};
-
-export const afipApi = {
-  testConnection: () => api.get('/api/afip/test'),
-  obtenerUltimoComprobante: (puntoVenta: number, tipoComprobante: string) =>
-    api.get(`/api/afip/ultimo-comprobante/${puntoVenta}/${tipoComprobante}`),
+    api.get('/api/v1/audit/logs', { params }),
 };
 
 export const dashboardApi = {
-  getStats: () => api.get('/api/dashboard/stats'),
+  getStats: () => api.get('/api/v1/dashboard/stats'),
+};
+
+export const reportsApi = {
+  accountStatement: (clientId: string, params?: { from?: string; to?: string; format?: string }) =>
+    api.get(`/api/v1/reports/clients/${clientId}/account-statement`, { params }),
+  feesPeriodSummary: (params?: { from?: string; to?: string }) =>
+    api.get('/api/v1/reports/fees/period-summary', { params }),
+  incomeSummary: (params?: { from?: string; to?: string }) =>
+    api.get('/api/v1/reports/studio/income-summary', { params }),
+};
+
+export const pdfApi = {
+  generarFactura: (facturaId: string) =>
+    api.post('/api/v1/pdf/factura', { facturaId }),
+  generarPresupuesto: (data: any) =>
+    api.post('/api/v1/pdf/presupuesto', data),
+  generarReporte: (data: any) =>
+    api.post('/api/v1/pdf/reporte', data),
+};
+
+export const afipApi = {
+  testConnection: () => api.get('/api/v1/afip/test'),
+  obtenerUltimoComprobante: (puntoVenta: number, tipoComprobante: string) =>
+    api.get(`/api/v1/afip/ultimo-comprobante/${puntoVenta}/${tipoComprobante}`),
 };
 
 export default api;

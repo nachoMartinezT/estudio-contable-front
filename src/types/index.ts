@@ -2,14 +2,14 @@ export interface User {
   id: string;
   email: string;
   nombre: string;
-  rol: 'ADMIN' | 'USER';
+  rol: 'SUPER_ADMIN' | 'ADMIN' | 'STAFF' | 'CLIENT';
   tenantId: string;
-  createdAt: string;
+  perms: string[];
+  clientId?: string;
 }
 
 export interface AuthResponse {
   token: string;
-  user: User;
 }
 
 export interface LoginRequest {
@@ -17,11 +17,65 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  nombre: string;
-  tenantId?: string;
+export interface StaffPermissions {
+  staffUserId: number;
+  tenantId: number;
+  canManageClients: boolean;
+  canViewInvoices: boolean;
+  canCreateInvoices: boolean;
+  canManageDocuments: boolean;
+  canViewDashboard: boolean;
+  canManageStaff: boolean;
+}
+
+export interface AccountMovement {
+  id: number;
+  tenantId: number;
+  clientId: number;
+  type: 'CARGO_FACTURA' | 'CARGO_MANUAL' | 'PAGO_EFECTIVO' | 'PAGO_TRANSFERENCIA' | 'PAGO_OTRO';
+  direction: 'DEBIT' | 'CREDIT';
+  amount: number;
+  description: string;
+  invoiceId?: number;
+  dueDate?: string;
+  paidAt?: string;
+  mpPaymentLinkUrl?: string;
+  mpStatus?: string;
+  createdAt: string;
+}
+
+export interface ClientBalance {
+  clientId: number;
+  tenantId: number;
+  totalDebt: number;
+  lastMovementAt: string;
+}
+
+export interface RecurringFee {
+  id: number;
+  tenantId: number;
+  clientId: number;
+  baseAmount: number;
+  active: boolean;
+}
+
+export interface RecurringFeeOverride {
+  id: number;
+  recurringFeeId: number;
+  yearMonth: string;
+  overrideAmount: number;
+  reason?: string;
+}
+
+export interface Tenant {
+  id: number;
+  nombreEstudio: string;
+  cuit: string;
+  afipHomologacion: boolean;
+  mpEnabled: boolean;
+  overdueReminderEnabled: boolean;
+  plan: string;
+  active: boolean;
 }
 
 export interface Cliente {

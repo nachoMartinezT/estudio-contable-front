@@ -1,0 +1,398 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard } from 'lucide-react';
+import { adminApi } from '../lib/api';
+import { Tenant } from '../types';
+
+const TAB_ESTUDIOS = 'estudios';
+const TAB_AFIP = 'afip';
+const TAB_MP = 'mp';
+
+const tenantSchema = z.object({
+  nombreEstudio: z.string().min(3, 'Nombre requerido'),
+  cuit: z.string().min(11, 'CUIT requerido'),
+  nombreAdmin: z.string().min(2, 'Nombre del admin requerido'),
+  emailAdmin: z.string().email('Email inválido'),
+});
+
+const afipSchema = z.object({
+  cuitEmisor: z.string().optional(),
+  certPassword: z.string().optional(),
+  homologacion: z.boolean().optional(),
+});
+
+const mpSchema = z.object({
+  accessToken: z.string().optional(),
+  publicKey: z.string().optional(),
+  webhookSecret: z.string().optional(),
+  mpEnabled: z.boolean().optional(),
+});
+
+const TABS = [
+  { key: TAB_ESTUDIOS, label: 'Estudios', icon: <Building2 size={18} /> },
+  { key: TAB_AFIP, label: 'AFIP', icon: <Shield size={18} /> },
+  { key: TAB_MP, label: 'MercadoPago', icon: <CreditCard size={18} /> },
+];
+
+const AdminPanel: React.FC = () => {
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState(TAB_ESTUDIOS);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [tempPassword, setTempPassword] = useState('');
+  const [passwordCopied, setPasswordCopied] = useState(false);
+  const [selectedTenantAfip, setSelectedTenantAfip] = useState('');
+  const [selectedTenantMp, setSelectedTenantMp] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  const { data: tenants, isLoading } = useQuery<Tenant[]>({
+    queryKey: ['adminTenants'],
+    queryFn: () => adminApi.getTenants().then((res) => res.data),
+  });
+
+  const createTenantMutation = useMutation({
+    mutationFn: (data: z.infer<typeof tenantSchema>) => adminApi.createTenant(data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['adminTenants'] });
+      setTempPassword(res.data?.tempPassword || res.data?.password || '');
+      createForm.reset();
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.message || 'Error al crear estudio');
+    },
+  });
+
+  const saveAfipMutation = useMutation({
+    mutationFn: (data: z.infer<typeof afipSchema>) =>
+      adminApi.updateAfipConfig(selectedTenantAfip, data),
+    onSuccess: () => {
+      setSuccessMsg('Configuración AFIP guardada');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.message || 'Error al guardar configuración AFIP');
+    },
+  });
+
+  const uploadCertMutation = useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return adminApi.uploadCert(selectedTenantAfip, formData);
+    },
+    onSuccess: () => {
+      setSuccessMsg('Certificado subido exitosamente');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.message || 'Error al subir certificado');
+    },
+  });
+
+  const saveMpMutation = useMutation({
+    mutationFn: (data: z.infer<typeof mpSchema>) =>
+      adminApi.updateMpConfig(selectedTenantMp, data),
+    onSuccess: () => {
+      setSuccessMsg('Configuración MercadoPago guardada');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.message || 'Error al guardar configuración MP');
+    },
+  });
+
+  const createForm = useForm<z.infer<typeof tenantSchema>>({
+    resolver: zodResolver(tenantSchema),
+  });
+
+  const afipForm = useForm<z.infer<typeof afipSchema>>({
+    defaultValues: { homologacion: false },
+  });
+
+  const mpForm = useForm<z.infer<typeof mpSchema>>({
+    defaultValues: { mpEnabled: false },
+  });
+
+  const handleCopyPassword = () => {
+    navigator.clipboard.writeText(tempPassword);
+    setPasswordCopied(true);
+    setTimeout(() => setPasswordCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
+        <p className="text-gray-600 mt-2">Administra estudios contables y configuraciones del sistema</p>
+      </div>
+
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="flex items-center space-x-2"><AlertCircle size={18} /><span>{errorMsg}</span></div>
+          <button onClick={() => setErrorMsg('')}><X size={16} /></button>
+        </div>
+      )}
+      {successMsg && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{successMsg}</span>
+          <button onClick={() => setSuccessMsg('')}><X size={16} /></button>
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === tab.key
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            {tab.icon}
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Tab: Estudios */}
+      {activeTab === TAB_ESTUDIOS && (
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <button onClick={() => { setShowCreateModal(true); setTempPassword(''); setErrorMsg(''); }} className="btn-primary flex items-center space-x-2">
+              <Plus size={20} />
+              <span>Nuevo estudio</span>
+            </button>
+          </div>
+          <div className="card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Nombre</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">CUIT</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Plan</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Estado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {isLoading ? (
+                    <tr><td colSpan={4} className="py-8 text-center text-gray-500">Cargando estudios...</td></tr>
+                  ) : !tenants?.length ? (
+                    <tr><td colSpan={4} className="py-8 text-center text-gray-500">No hay estudios registrados</td></tr>
+                  ) : (
+                    tenants.map((t) => (
+                      <tr key={t.id} className="hover:bg-gray-50">
+                        <td className="py-4 px-4 font-medium text-gray-900">{t.nombreEstudio}</td>
+                        <td className="py-4 px-4 text-gray-600">{t.cuit}</td>
+                        <td className="py-4 px-4">
+                          <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">{t.plan}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${t.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {t.active ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Create Tenant Modal */}
+          {showCreateModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900">Nuevo Estudio</h2>
+                  <button onClick={() => { setShowCreateModal(false); setTempPassword(''); }} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+                </div>
+                {tempPassword ? (
+                  <div className="p-6 space-y-4">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <p className="text-green-800 font-medium mb-2">Estudio creado exitosamente</p>
+                      <p className="text-sm text-green-700 mb-3">Contraseña temporal del administrador:</p>
+                      <div className="flex items-center space-x-2">
+                        <code className="flex-1 bg-white px-3 py-2 rounded border border-green-300 text-lg font-mono text-center select-all">{tempPassword}</code>
+                        <button onClick={handleCopyPassword} className="p-2 bg-white hover:bg-gray-50 rounded-lg border border-gray-200" title="Copiar">
+                          {passwordCopied ? <Check size={18} className="text-green-600" /> : <Copy size={18} className="text-gray-500" />}
+                        </button>
+                      </div>
+                    </div>
+                    <button onClick={() => { setShowCreateModal(false); setTempPassword(''); }} className="btn-primary w-full">Cerrar</button>
+                  </div>
+                ) : (
+                  <form onSubmit={createForm.handleSubmit((data) => createTenantMutation.mutate(data))} className="p-6 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del estudio *</label>
+                      <input type="text" {...createForm.register('nombreEstudio')} className="input-field" placeholder="Estudio Contable S.A." />
+                      {createForm.formState.errors.nombreEstudio && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.nombreEstudio.message}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CUIT *</label>
+                      <input type="text" {...createForm.register('cuit')} className="input-field" placeholder="30-12345678-9" />
+                      {createForm.formState.errors.cuit && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.cuit.message}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del administrador *</label>
+                      <input type="text" {...createForm.register('nombreAdmin')} className="input-field" placeholder="Juan Pérez" />
+                      {createForm.formState.errors.nombreAdmin && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.nombreAdmin.message}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email del administrador *</label>
+                      <input type="email" {...createForm.register('emailAdmin')} className="input-field" placeholder="admin@estudio.com" />
+                      {createForm.formState.errors.emailAdmin && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.emailAdmin.message}</p>}
+                    </div>
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                      <button type="button" onClick={() => setShowCreateModal(false)} className="btn-secondary">Cancelar</button>
+                      <button type="submit" disabled={createTenantMutation.isPending} className="btn-primary">
+                        {createTenantMutation.isPending ? 'Creando...' : 'Crear Estudio'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab: AFIP */}
+      {activeTab === TAB_AFIP && (
+        <div className="space-y-4">
+          <div className="card">
+            <div className="max-w-md">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Estudio</label>
+              <select
+                value={selectedTenantAfip}
+                onChange={(e) => setSelectedTenantAfip(e.target.value)}
+                className="input-field"
+              >
+                <option value="">Seleccionar estudio...</option>
+                {tenants?.map((t) => (
+                  <option key={t.id} value={String(t.id)}>{t.nombreEstudio}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {selectedTenantAfip && (
+            <form onSubmit={afipForm.handleSubmit((data) => saveAfipMutation.mutate(data))} className="card space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CUIT Emisor</label>
+                <input type="text" {...afipForm.register('cuitEmisor')} className="input-field max-w-md" placeholder="30-12345678-9" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password del certificado</label>
+                <input type="password" {...afipForm.register('certPassword')} className="input-field max-w-md" placeholder="Password del .p12" />
+              </div>
+              <div className="flex items-center justify-between max-w-md">
+                <span className="text-sm font-medium text-gray-700">Entorno de homologación</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" {...afipForm.register('homologacion')} />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+              <div className="flex items-center space-x-4 pt-4 border-t border-gray-200">
+                <label className="btn-secondary cursor-pointer flex items-center space-x-2">
+                  <Upload size={16} />
+                  <span>{uploadCertMutation.isPending ? 'Subiendo...' : 'Subir certificado .p12'}</span>
+                  <input
+                    type="file"
+                    accept=".p12"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadCertMutation.mutate(file);
+                    }}
+                  />
+                </label>
+                <button type="submit" disabled={saveAfipMutation.isPending} className="btn-primary">
+                  {saveAfipMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Tab: MercadoPago */}
+      {activeTab === TAB_MP && (
+        <div className="space-y-4">
+          <div className="card">
+            <div className="max-w-md">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Estudio</label>
+              <select
+                value={selectedTenantMp}
+                onChange={(e) => setSelectedTenantMp(e.target.value)}
+                className="input-field"
+              >
+                <option value="">Seleccionar estudio...</option>
+                {tenants?.map((t) => (
+                  <option key={t.id} value={String(t.id)}>{t.nombreEstudio}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {selectedTenantMp && (
+            <form onSubmit={mpForm.handleSubmit((data) => saveMpMutation.mutate(data))} className="card space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Access Token</label>
+                <input type="text" {...mpForm.register('accessToken')} className="input-field max-w-lg" placeholder="APP_USR-..." />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Public Key</label>
+                <input type="text" {...mpForm.register('publicKey')} className="input-field max-w-lg" placeholder="APP_USR-..." />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Webhook Secret</label>
+                <input type="text" {...mpForm.register('webhookSecret')} className="input-field max-w-lg" placeholder="Secret..." />
+              </div>
+              <div className="flex items-center justify-between max-w-lg">
+                <span className="text-sm font-medium text-gray-700">MercadoPago habilitado</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" {...mpForm.register('mpEnabled')} />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">URL del Webhook</label>
+                <div className="flex items-center max-w-lg">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`https://contableapi.guidapixel.tech/api/v1/mp/webhook/${selectedTenantMp}`}
+                    className="input-field flex-1 bg-gray-50 text-gray-600 cursor-text select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(`https://contableapi.guidapixel.tech/api/v1/mp/webhook/${selectedTenantMp}`)}
+                    className="ml-2 p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                    title="Copiar URL"
+                  >
+                    <Copy size={16} className="text-gray-500" />
+                  </button>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-gray-200">
+                <button type="submit" disabled={saveMpMutation.isPending} className="btn-primary">
+                  {saveMpMutation.isPending ? 'Guardando...' : 'Guardar configuración'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminPanel;

@@ -1,12 +1,6 @@
 node_modules
-npm-debug.log
-.git
-.gitignore
-.env.local
-.env.development
 dist
-.DS_Store
-README.md
-temp.js
-src/test
-coverage
+.env
+.env.local
+.env.*.local
+*.log

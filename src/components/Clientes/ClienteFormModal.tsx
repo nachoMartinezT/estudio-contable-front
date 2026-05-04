@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { clientesApi } from '../../lib/api';
+import { clientsApi } from '../../lib/api';
 import { Cliente } from '../../types';
 
 const clienteSchema = z.object({
@@ -52,8 +52,8 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({ cliente, onClose, o
   const mutation = useMutation({
     mutationFn: (data: ClienteFormData) =>
       isEdit
-        ? clientesApi.update(cliente!.id, data)
-        : clientesApi.create(data),
+        ? clientsApi.update(cliente!.id, data)
+        : clientsApi.create(data),
     onSuccess: () => {
       onSuccess();
       reset();
