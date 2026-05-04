@@ -1,0 +1,44 @@
+{
+  "name": "contable-frontend",
+  "private": true,
+  "version": "2.1.0",
+  "type": "module",
+  "description": "Frontend moderno para Guida Contable SaaS",
+  "author": "Guida Pixel",
+  "license": "proprietary",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
+    "@tailwindcss/postcss": "^4.2.4",
+    "@tanstack/react-query": "^5.52.2",
+    "@tanstack/react-query-devtools": "^5.52.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "axios": "^1.7.9",
+    "lucide-react": "^0.475.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-hook-form": "^7.54.0",
+    "react-router-dom": "^6.27.0",
+    "terser": "^5.46.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "postcss": "^8.5.12",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}
