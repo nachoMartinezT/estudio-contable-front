@@ -108,6 +108,8 @@ export const adminApi = {
     }),
   updateMpConfig: (id: string, data: any) =>
     api.put(`/api/v1/admin/tenants/${id}/mp-config`, data),
+  deleteTenant: (id: string) =>
+    api.delete(`/api/v1/admin/tenants/${id}`),
 };
 
 export const tenantApi = {

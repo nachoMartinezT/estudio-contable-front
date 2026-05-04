@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard } from 'lucide-react';
+import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard, Trash2 } from 'lucide-react';
 import { adminApi } from '../lib/api';
 import { Tenant } from '../types';
 
@@ -20,9 +20,9 @@ const tenantSchema = z.object({
 });
 
 const afipSchema = z.object({
-  cuitEmisor: z.string().optional(),
-  certPassword: z.string().optional(),
-  homologacion: z.boolean().optional(),
+  afipCuit: z.string().optional(),
+  afipCertPassword: z.string().optional(),
+  afipHomologacion: z.boolean().optional(),
 });
 
 const mpSchema = z.object({
@@ -63,6 +63,18 @@ const AdminPanel: React.FC = () => {
     },
     onError: (err: any) => {
       setErrorMsg(err.response?.data?.message || 'Error al crear estudio');
+    },
+  });
+
+  const deleteTenantMutation = useMutation({
+    mutationFn: (id: string) => adminApi.deleteTenant(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminTenants'] });
+      setSuccessMsg('Estudio eliminado');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.message || 'Error al eliminar estudio');
     },
   });
 
@@ -110,7 +122,7 @@ const AdminPanel: React.FC = () => {
   });
 
   const afipForm = useForm<z.infer<typeof afipSchema>>({
-    defaultValues: { homologacion: false },
+    defaultValues: { afipHomologacion: false },
   });
 
   const mpForm = useForm<z.infer<typeof mpSchema>>({
@@ -179,13 +191,14 @@ const AdminPanel: React.FC = () => {
                     <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">CUIT</th>
                     <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Plan</th>
                     <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Estado</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {isLoading ? (
-                    <tr><td colSpan={4} className="py-8 text-center text-gray-500">Cargando estudios...</td></tr>
+                    <tr><td colSpan={5} className="py-8 text-center text-gray-500">Cargando estudios...</td></tr>
                   ) : !tenants?.length ? (
-                    <tr><td colSpan={4} className="py-8 text-center text-gray-500">No hay estudios registrados</td></tr>
+                    <tr><td colSpan={5} className="py-8 text-center text-gray-500">No hay estudios registrados</td></tr>
                   ) : (
                     tenants.map((t) => (
                       <tr key={t.id} className="hover:bg-gray-50">
@@ -198,6 +211,19 @@ const AdminPanel: React.FC = () => {
                           <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${t.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                             {t.active ? 'Activo' : 'Inactivo'}
                           </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <button
+                            onClick={() => {
+                              if (confirm(`¿Eliminar el estudio "${t.nombreEstudio}"? Esta acción no se puede deshacer.`)) {
+                                deleteTenantMutation.mutate(String(t.id));
+                              }
+                            }}
+                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                            title="Eliminar estudio"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -293,16 +319,16 @@ const AdminPanel: React.FC = () => {
             <form onSubmit={afipForm.handleSubmit((data) => saveAfipMutation.mutate(data))} className="card space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">CUIT Emisor</label>
-                <input type="text" {...afipForm.register('cuitEmisor')} className="input-field max-w-md" placeholder="30-12345678-9" />
+                <input type="text" {...afipForm.register('afipCuit')} className="input-field max-w-md" placeholder="30-12345678-9" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password del certificado</label>
-                <input type="password" {...afipForm.register('certPassword')} className="input-field max-w-md" placeholder="Password del .p12" />
+                <input type="password" {...afipForm.register('afipCertPassword')} className="input-field max-w-md" placeholder="Password del .p12" />
               </div>
               <div className="flex items-center justify-between max-w-md">
                 <span className="text-sm font-medium text-gray-700">Entorno de homologación</span>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" {...afipForm.register('homologacion')} />
+                  <input type="checkbox" className="sr-only peer" {...afipForm.register('afipHomologacion')} />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
               </div>
