@@ -10,6 +10,7 @@ import { User, StaffPermissions } from '../types';
 
 const employeeSchema = z.object({
   nombre: z.string().min(2, 'Nombre requerido'),
+  apellido: z.string().min(2, 'Apellido requerido'),
   email: z.string().email('Email inválido'),
 });
 
@@ -48,7 +49,7 @@ const Empleados: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: (data: z.infer<typeof employeeSchema>) =>
-      tenantApi.createUser(tenantId, { ...data, rol: 'STAFF' }),
+      tenantApi.createUser(tenantId, { ...data, role: 'STAFF' }),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['tenantUsers', tenantId] });
       setTempPassword(res.data?.tempPassword || res.data?.password || '');
@@ -228,6 +229,11 @@ const Empleados: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                   <input type="text" {...createForm.register('nombre')} className="input-field" placeholder="Nombre del empleado" />
                   {createForm.formState.errors.nombre && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.nombre.message}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellido *</label>
+                  <input type="text" {...createForm.register('apellido')} className="input-field" placeholder="Apellido del empleado" />
+                  {createForm.formState.errors.apellido && <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.apellido.message}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>

@@ -135,6 +135,14 @@ const AdminPanel: React.FC = () => {
     setTimeout(() => setPasswordCopied(false), 2000);
   };
 
+  const formatCuit = (cuit: string) => {
+    const clean = cuit.replace(/\D/g, '');
+    if (clean.length === 11) {
+      return `${clean.slice(0, 2)}-${clean.slice(2, 10)}-${clean.slice(10)}`;
+    }
+    return cuit;
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -203,7 +211,7 @@ const AdminPanel: React.FC = () => {
                     tenants.map((t) => (
                       <tr key={t.id} className="hover:bg-gray-50">
                         <td className="py-4 px-4 font-medium text-gray-900">{t.razonSocial}</td>
-                        <td className="py-4 px-4 text-gray-600">{t.cuit}</td>
+                        <td className="py-4 px-4 text-gray-600">{formatCuit(t.cuit)}</td>
                         <td className="py-4 px-4">
                           <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
                             {new Date(t.createdAt).toLocaleDateString('es-AR')}
