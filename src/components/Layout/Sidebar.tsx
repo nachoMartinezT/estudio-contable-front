@@ -82,6 +82,9 @@ const Sidebar: React.FC = () => {
           <div className="flex-1">
             <p className="font-medium text-gray-900">{user?.nombre}</p>
             <p className="text-sm text-gray-500">{user?.email}</p>
+            {user?.tenantName && (
+              <p className="text-xs text-primary-600 mt-0.5">{user.tenantName}</p>
+            )}
           </div>
           <button className="p-2 hover:bg-gray-100 rounded-lg">
             <Bell size={18} className="text-gray-500" />

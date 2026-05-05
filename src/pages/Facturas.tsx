@@ -10,7 +10,10 @@ const Facturas: React.FC = () => {
 
   const { data: facturas, isLoading } = useQuery<Factura[]>({
     queryKey: ['facturas'],
-    queryFn: () => invoicesApi.getAll().then(res => res.data),
+    queryFn: () => invoicesApi.getAll().then(res => {
+      const data = res.data;
+      return Array.isArray(data) ? data : (data?.content || []);
+    }),
   });
 
   const filteredFacturas = facturas?.filter(factura => {
