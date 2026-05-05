@@ -189,7 +189,7 @@ const AdminPanel: React.FC = () => {
                   <tr className="border-b border-gray-200">
                     <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Nombre</th>
                     <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">CUIT</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Plan</th>
+                    <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Creado</th>
                     <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Estado</th>
                     <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Acciones</th>
                   </tr>
@@ -202,20 +202,22 @@ const AdminPanel: React.FC = () => {
                   ) : (
                     tenants.map((t) => (
                       <tr key={t.id} className="hover:bg-gray-50">
-                        <td className="py-4 px-4 font-medium text-gray-900">{t.nombreEstudio}</td>
+                        <td className="py-4 px-4 font-medium text-gray-900">{t.razonSocial}</td>
                         <td className="py-4 px-4 text-gray-600">{t.cuit}</td>
                         <td className="py-4 px-4">
-                          <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">{t.plan}</span>
+                          <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+                            {new Date(t.createdAt).toLocaleDateString('es-AR')}
+                          </span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${t.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {t.active ? 'Activo' : 'Inactivo'}
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${t.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {t.activo ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
                         <td className="py-4 px-4">
                           <button
                             onClick={() => {
-                              if (confirm(`¿Eliminar el estudio "${t.nombreEstudio}"? Esta acción no se puede deshacer.`)) {
+                              if (confirm(`¿Eliminar el estudio "${t.razonSocial}"? Esta acción no se puede deshacer.`)) {
                                 deleteTenantMutation.mutate(String(t.id));
                               }
                             }}
@@ -309,7 +311,7 @@ const AdminPanel: React.FC = () => {
               >
                 <option value="">Seleccionar estudio...</option>
                 {tenants?.map((t) => (
-                  <option key={t.id} value={String(t.id)}>{t.nombreEstudio}</option>
+                  <option key={t.id} value={String(t.id)}>{t.razonSocial}</option>
                 ))}
               </select>
             </div>
@@ -368,7 +370,7 @@ const AdminPanel: React.FC = () => {
               >
                 <option value="">Seleccionar estudio...</option>
                 {tenants?.map((t) => (
-                  <option key={t.id} value={String(t.id)}>{t.nombreEstudio}</option>
+                  <option key={t.id} value={String(t.id)}>{t.razonSocial}</option>
                 ))}
               </select>
             </div>

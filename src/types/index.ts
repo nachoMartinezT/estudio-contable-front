@@ -71,13 +71,11 @@ export interface RecurringFeeOverride {
 
 export interface Tenant {
   id: number;
-  nombreEstudio: string;
+  razonSocial: string;
   cuit: string;
-  afipHomologacion: boolean;
-  mpEnabled: boolean;
-  overdueReminderEnabled: boolean;
-  plan: string;
-  active: boolean;
+  emailContacto: string;
+  activo: boolean;
+  createdAt: string;
 }
 
 export interface Cliente {
