@@ -24,9 +24,9 @@ const Clientes: React.FC = () => {
   });
 
   const filteredClientes = clientes?.filter(cliente =>
-    cliente.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    cliente.razonSocial.toLowerCase().includes(search.toLowerCase()) ||
     cliente.email.toLowerCase().includes(search.toLowerCase()) ||
-    cliente.numeroDocumento.includes(search)
+    cliente.cuit.includes(search)
   );
 
   const handleEdit = (cliente: Cliente) => {
@@ -101,10 +101,6 @@ const Clientes: React.FC = () => {
             {filteredClientes?.filter(c => c.estado === 'ACTIVO').length || 0}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Nuevos este mes</p>
-          <p className="text-2xl font-bold text-gray-900">12</p>
-        </div>
       </div>
 
       {/* Clientes Table */}
@@ -114,23 +110,22 @@ const Clientes: React.FC = () => {
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Cliente</th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Documento</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">CUIT</th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Contacto</th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Estado</th>
-                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Fecha Registro</th>
                 <th className="py-3 px-4 text-left text-sm font-semibold text-gray-900">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-500">
+                  <td colSpan={5} className="py-8 text-center text-gray-500">
                     Cargando clientes...
                   </td>
                 </tr>
               ) : filteredClientes?.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-500">
+                  <td colSpan={5} className="py-8 text-center text-gray-500">
                     No se encontraron clientes
                   </td>
                 </tr>
@@ -138,13 +133,10 @@ const Clientes: React.FC = () => {
                 filteredClientes?.map((cliente) => (
                   <tr key={cliente.id} className="hover:bg-gray-50">
                     <td className="py-4 px-4">
-                      <div>
-                        <p className="font-medium text-gray-900">{cliente.nombre}</p>
-                        <p className="text-sm text-gray-500">{cliente.tipoDocumento}</p>
-                      </div>
+                      <p className="font-medium text-gray-900">{cliente.razonSocial}</p>
                     </td>
                     <td className="py-4 px-4">
-                      <p className="font-medium">{cliente.numeroDocumento}</p>
+                      <p className="font-medium">{cliente.cuit}</p>
                     </td>
                     <td className="py-4 px-4">
                       <p className="text-gray-900">{cliente.email}</p>
@@ -152,9 +144,6 @@ const Clientes: React.FC = () => {
                     </td>
                     <td className="py-4 px-4">
                       {getEstadoBadge(cliente.estado)}
-                    </td>
-                    <td className="py-4 px-4 text-gray-500">
-                      {new Date(cliente.createdAt).toLocaleDateString('es-AR')}
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-2">

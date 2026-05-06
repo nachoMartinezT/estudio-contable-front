@@ -80,16 +80,14 @@ export interface Tenant {
 
 export interface Cliente {
   id: number | string;
-  nombre: string;
-  tipoDocumento: 'DNI' | 'CUIT' | 'CUIL' | 'PASAPORTE';
-  numeroDocumento: string;
+  razonSocial: string;
+  cuit: string;
   email: string;
   telefono: string;
-  direccion: string;
+  activo: boolean;
   estado: 'ACTIVO' | 'INACTIVO';
   tenantId: number | string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface Factura {

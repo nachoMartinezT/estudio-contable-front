@@ -8,13 +8,10 @@ import { clientsApi } from '../../lib/api';
 import { Cliente } from '../../types';
 
 const clienteSchema = z.object({
-  nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  tipoDocumento: z.enum(['DNI', 'CUIT', 'CUIL', 'PASAPORTE']),
-  numeroDocumento: z.string().min(3, 'Número de documento requerido'),
+  razonSocial: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  cuit: z.string().min(11, 'CUIT requerido (11 dígitos)'),
   email: z.string().email('Email inválido'),
   telefono: z.string().min(8, 'Teléfono requerido'),
-  direccion: z.string().min(5, 'Dirección requerida'),
-  estado: z.enum(['ACTIVO', 'INACTIVO']),
 });
 
 type ClienteFormData = z.infer<typeof clienteSchema>;
@@ -36,17 +33,11 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({ cliente, onClose, o
   } = useForm<ClienteFormData>({
     resolver: zodResolver(clienteSchema),
     defaultValues: cliente ? {
-      nombre: cliente.nombre,
-      tipoDocumento: cliente.tipoDocumento,
-      numeroDocumento: cliente.numeroDocumento,
+      razonSocial: cliente.razonSocial,
+      cuit: cliente.cuit,
       email: cliente.email,
       telefono: cliente.telefono,
-      direccion: cliente.direccion,
-      estado: cliente.estado,
-    } : {
-      tipoDocumento: 'CUIT',
-      estado: 'ACTIVO',
-    },
+    } : {},
   });
 
   const mutation = useMutation({
@@ -94,121 +85,26 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({ cliente, onClose, o
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Nombre */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre Completo *
-              </label>
-              <input
-                {...register('nombre')}
-                type="text"
-                className="input-field"
-                placeholder="Nombre del cliente"
-              />
-              {errors.nombre && (
-                <p className="mt-1 text-sm text-red-600">{errors.nombre.message}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-700 mb-2">Razón Social / Nombre *</label>
+              <input {...register('razonSocial')} type="text" className="input-field" placeholder="Nombre o razón social" />
+              {errors.razonSocial && <p className="mt-1 text-sm text-red-600">{errors.razonSocial.message}</p>}
             </div>
-
-            {/* Tipo Documento */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo de Documento *
-              </label>
-              <select
-                {...register('tipoDocumento')}
-                className="input-field"
-              >
-                <option value="DNI">DNI</option>
-                <option value="CUIT">CUIT</option>
-                <option value="CUIL">CUIL</option>
-                <option value="PASAPORTE">Pasaporte</option>
-              </select>
-              {errors.tipoDocumento && (
-                <p className="mt-1 text-sm text-red-600">{errors.tipoDocumento.message}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-700 mb-2">CUIT *</label>
+              <input {...register('cuit')} type="text" className="input-field" placeholder="30-12345678-9" />
+              {errors.cuit && <p className="mt-1 text-sm text-red-600">{errors.cuit.message}</p>}
             </div>
-
-            {/* Número Documento */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Número de Documento *
-              </label>
-              <input
-                {...register('numeroDocumento')}
-                type="text"
-                className="input-field"
-                placeholder="Ej: 20-12345678-9"
-              />
-              {errors.numeroDocumento && (
-                <p className="mt-1 text-sm text-red-600">{errors.numeroDocumento.message}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+              <input {...register('email')} type="email" className="input-field" placeholder="cliente@ejemplo.com" />
+              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
             </div>
-
-            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email *
-              </label>
-              <input
-                {...register('email')}
-                type="email"
-                className="input-field"
-                placeholder="cliente@ejemplo.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono *</label>
+              <input {...register('telefono')} type="tel" className="input-field" placeholder="+54 11 1234-5678" />
+              {errors.telefono && <p className="mt-1 text-sm text-red-600">{errors.telefono.message}</p>}
             </div>
-
-            {/* Teléfono */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Teléfono *
-              </label>
-              <input
-                {...register('telefono')}
-                type="tel"
-                className="input-field"
-                placeholder="+54 11 1234-5678"
-              />
-              {errors.telefono && (
-                <p className="mt-1 text-sm text-red-600">{errors.telefono.message}</p>
-              )}
-            </div>
-
-            {/* Estado */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Estado *
-              </label>
-              <select
-                {...register('estado')}
-                className="input-field"
-              >
-                <option value="ACTIVO">Activo</option>
-                <option value="INACTIVO">Inactivo</option>
-              </select>
-              {errors.estado && (
-                <p className="mt-1 text-sm text-red-600">{errors.estado.message}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Dirección */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Dirección *
-            </label>
-            <textarea
-              {...register('direccion')}
-              rows={3}
-              className="input-field"
-              placeholder="Dirección completa"
-            />
-            {errors.direccion && (
-              <p className="mt-1 text-sm text-red-600">{errors.direccion.message}</p>
-            )}
           </div>
 
           {/* Actions */}

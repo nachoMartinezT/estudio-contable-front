@@ -195,7 +195,7 @@ const CuentaCorriente: React.FC = () => {
                 <option value="">Seleccionar cliente...</option>
                 {clients?.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nombre}
+                    {c.razonSocial}
                   </option>
                 ))}
               </select>

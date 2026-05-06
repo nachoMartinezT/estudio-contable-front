@@ -158,7 +158,7 @@ const HonorariosRecurrentes: React.FC = () => {
               >
                 <option value="">Seleccionar cliente...</option>
                 {clients?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                  <option key={c.id} value={c.id}>{c.razonSocial}</option>
                 ))}
               </select>
             </div>
