@@ -99,18 +99,6 @@ const Empleados: React.FC = () => {
     setTimeout(() => setPasswordCopied(false), 2000);
   };
 
-  const handleTogglePerm = (key: string) => {
-    const updated = {
-      canManageClients: key === 'canManageClients' ? !permissions.canManageClients : permissions.canManageClients,
-      canViewInvoices: key === 'canViewInvoices' ? !permissions.canViewInvoices : permissions.canViewInvoices,
-      canCreateInvoices: key === 'canCreateInvoices' ? !permissions.canCreateInvoices : permissions.canCreateInvoices,
-      canManageDocuments: key === 'canManageDocuments' ? !permissions.canManageDocuments : permissions.canManageDocuments,
-      canViewDashboard: key === 'canViewDashboard' ? !permissions.canViewDashboard : permissions.canViewDashboard,
-      canManageStaff: key === 'canManageStaff' ? !permissions.canManageStaff : permissions.canManageStaff,
-    };
-    updatePermsMutation.mutate(updated);
-  };
-
   const selectedEmployee = staffUsers.find((u) => u.id === selectedEmployeeId);
 
   return (
