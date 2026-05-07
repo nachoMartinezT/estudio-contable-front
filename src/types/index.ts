@@ -94,19 +94,16 @@ export interface Cliente {
 
 export interface Factura {
   id: number | string;
-  numero: string;
-  clienteId: number | string;
-  clienteNombre: string;
+  numeroFactura: string;
   fechaEmision: string;
-  fechaVencimiento: string;
-  tipo: 'A' | 'B' | 'C' | 'E' | 'M';
-  moneda: 'ARS' | 'USD';
-  subtotal: number;
-  iva: number;
+  clientId: number | string;
+  clienteNombre?: string;
   total: number;
-  estado: 'PENDIENTE' | 'PAGADA' | 'ANULADA' | 'ENVIADA_AFIP';
-  afipCAE?: string;
-  afipFechaVencimientoCAE?: string;
+  estado: string;
+  cae?: string;
+  vencimientoCae?: string;
+  tipoComprobante?: number;
+  puntoVenta?: number;
   tenantId: number | string;
   createdAt: string;
 }
