@@ -41,11 +41,20 @@ const Empleados: React.FC = () => {
 
   const staffUsers = users || [];
 
-  const { data: permissions, isLoading: permsLoading } = useQuery<StaffPermissions>({
+  const { data: permCodes, isLoading: permsLoading } = useQuery<string[]>({
     queryKey: ['staffPermissions', tenantId, selectedEmployeeId],
     queryFn: () => tenantApi.getPermissions(tenantId, selectedEmployeeId!).then((res) => res.data),
     enabled: !!tenantId && !!selectedEmployeeId,
   });
+
+  const permissions: Record<string, boolean> = {
+    canManageClients: permCodes?.includes('MANAGE_CLIENTS') ?? false,
+    canViewInvoices: permCodes?.includes('VIEW_INVOICES') ?? false,
+    canCreateInvoices: permCodes?.includes('CREATE_INVOICES') ?? false,
+    canManageDocuments: permCodes?.includes('MANAGE_DOCUMENTS') ?? false,
+    canViewDashboard: permCodes?.includes('VIEW_DASHBOARD') ?? false,
+    canManageStaff: permCodes?.includes('MANAGE_STAFF') ?? false,
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: z.infer<typeof employeeSchema>) =>
@@ -61,12 +70,24 @@ const Empleados: React.FC = () => {
   });
 
   const updatePermsMutation = useMutation({
-    mutationFn: (data: Partial<StaffPermissions>) =>
+    mutationFn: (data: Record<string, boolean>) =>
       tenantApi.updatePermissions(tenantId, selectedEmployeeId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staffPermissions', tenantId, selectedEmployeeId] });
     },
   });
+
+  const handleTogglePerm = (key: string) => {
+    const updated = {
+      canManageClients: key === 'canManageClients' ? !permissions.canManageClients : permissions.canManageClients,
+      canViewInvoices: key === 'canViewInvoices' ? !permissions.canViewInvoices : permissions.canViewInvoices,
+      canCreateInvoices: key === 'canCreateInvoices' ? !permissions.canCreateInvoices : permissions.canCreateInvoices,
+      canManageDocuments: key === 'canManageDocuments' ? !permissions.canManageDocuments : permissions.canManageDocuments,
+      canViewDashboard: key === 'canViewDashboard' ? !permissions.canViewDashboard : permissions.canViewDashboard,
+      canManageStaff: key === 'canManageStaff' ? !permissions.canManageStaff : permissions.canManageStaff,
+    };
+    updatePermsMutation.mutate(updated);
+  };
 
   const createForm = useForm<z.infer<typeof employeeSchema>>({
     resolver: zodResolver(employeeSchema),
@@ -79,8 +100,15 @@ const Empleados: React.FC = () => {
   };
 
   const handleTogglePerm = (key: string) => {
-    if (!permissions) return;
-    updatePermsMutation.mutate({ [key]: !(permissions as any)[key] } as any);
+    const updated = {
+      canManageClients: key === 'canManageClients' ? !permissions.canManageClients : permissions.canManageClients,
+      canViewInvoices: key === 'canViewInvoices' ? !permissions.canViewInvoices : permissions.canViewInvoices,
+      canCreateInvoices: key === 'canCreateInvoices' ? !permissions.canCreateInvoices : permissions.canCreateInvoices,
+      canManageDocuments: key === 'canManageDocuments' ? !permissions.canManageDocuments : permissions.canManageDocuments,
+      canViewDashboard: key === 'canViewDashboard' ? !permissions.canViewDashboard : permissions.canViewDashboard,
+      canManageStaff: key === 'canManageStaff' ? !permissions.canManageStaff : permissions.canManageStaff,
+    };
+    updatePermsMutation.mutate(updated);
   };
 
   const selectedEmployee = staffUsers.find((u) => u.id === selectedEmployeeId);
@@ -184,7 +212,7 @@ const Empleados: React.FC = () => {
                       <input
                         type="checkbox"
                         className="sr-only peer"
-                        checked={!!(permissions as any)?.[key]}
+                        checked={permissions[key]}
                         onChange={() => handleTogglePerm(key)}
                       />
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>

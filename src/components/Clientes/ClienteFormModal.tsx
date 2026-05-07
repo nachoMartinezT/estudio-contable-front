@@ -12,7 +12,18 @@ const clienteSchema = z.object({
   cuit: z.string().min(11, 'CUIT requerido (11 dígitos)'),
   email: z.string().email('Email inválido'),
   telefono: z.string().min(8, 'Teléfono requerido'),
+  condicionIVA: z.string().optional(),
+  honorarioMensual: z.number().min(0).optional(),
 });
+
+const IVA_CONDICIONES = [
+  { value: '', label: 'Seleccionar...' },
+  { value: 'Responsable Inscripto', label: 'Responsable Inscripto' },
+  { value: 'Monotributista', label: 'Monotributista' },
+  { value: 'Exento', label: 'Exento' },
+  { value: 'Consumidor Final', label: 'Consumidor Final' },
+  { value: 'No Categorizado', label: 'No Categorizado' },
+];
 
 type ClienteFormData = z.infer<typeof clienteSchema>;
 
@@ -37,7 +48,11 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({ cliente, onClose, o
       cuit: cliente.cuit,
       email: cliente.email,
       telefono: cliente.telefono,
-    } : {},
+      condicionIVA: cliente.condicionIVA || '',
+      honorarioMensual: cliente.honorarioMensual || 0,
+    } : {
+      honorarioMensual: 0,
+    },
   });
 
   const mutation = useMutation({
@@ -104,6 +119,18 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({ cliente, onClose, o
               <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono *</label>
               <input {...register('telefono')} type="tel" className="input-field" placeholder="+54 11 1234-5678" />
               {errors.telefono && <p className="mt-1 text-sm text-red-600">{errors.telefono.message}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Condición IVA</label>
+              <select {...register('condicionIVA')} className="input-field">
+                {IVA_CONDICIONES.map(c => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Honorario Mensual</label>
+              <input {...register('honorarioMensual', { valueAsNumber: true })} type="number" step="0.01" className="input-field" placeholder="0.00" />
             </div>
           </div>
 

@@ -84,6 +84,8 @@ export interface Cliente {
   cuit: string;
   email: string;
   telefono: string;
+  condicionIVA: string;
+  honorarioMensual: number;
   activo: boolean;
   estado: 'ACTIVO' | 'INACTIVO';
   tenantId: number | string;
