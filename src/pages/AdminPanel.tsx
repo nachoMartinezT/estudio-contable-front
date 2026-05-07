@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard, Trash2 } from 'lucide-react';
+import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard, Trash2, Edit } from 'lucide-react';
 import { adminApi } from '../lib/api';
 import { Tenant } from '../types';
 
@@ -44,6 +44,9 @@ const AdminPanel: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [tempPassword, setTempPassword] = useState('');
   const [passwordCopied, setPasswordCopied] = useState(false);
+  const [editTenantId, setEditTenantId] = useState<string | null>(null);
+  const [editSubModules, setEditSubModules] = useState<Record<string, boolean>>({});
+  const [editLoading, setEditLoading] = useState(false);
   const [selectedTenantAfip, setSelectedTenantAfip] = useState('');
   const [selectedTenantMp, setSelectedTenantMp] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -77,6 +80,72 @@ const AdminPanel: React.FC = () => {
       setErrorMsg(err.response?.data?.message || 'Error al eliminar estudio');
     },
   });
+
+  const editTenantMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => adminApi.updateTenant(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminTenants'] });
+      setSuccessMsg('Estudio actualizado');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.error || err.response?.data?.message || 'Error al actualizar');
+    },
+  });
+
+  const updateSubMutation = useMutation({
+    mutationFn: ({ id, moduleName, active }: { id: string; moduleName: string; active: boolean }) =>
+      adminApi.updateSubscription(id, { moduleName, active }),
+    onSuccess: () => {
+      setSuccessMsg('Módulo actualizado');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.error || 'Error al actualizar módulo');
+    },
+  });
+
+  const handleEditTenant = async (tenantId: string) => {
+    setEditTenantId(tenantId);
+    setEditLoading(true);
+    try {
+      const res = await adminApi.getTenant(tenantId);
+      const data = res.data;
+      editForm.reset({
+        razonSocial: data.razonSocial || '',
+        cuit: data.cuit || '',
+        emailContacto: data.emailContacto || '',
+        activo: data.activo ?? true,
+      });
+      const modules: Record<string, boolean> = {};
+      (data.activeModules || []).forEach((m: string) => { modules[m] = true; });
+      setEditSubModules(modules);
+    } catch {
+      setErrorMsg('Error al cargar datos del estudio');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const editSchema = z.object({
+    razonSocial: z.string().min(3, 'Nombre requerido'),
+    cuit: z.string().min(11, 'CUIT requerido'),
+    emailContacto: z.string().email('Email inválido').optional().or(z.literal('')),
+    activo: z.boolean(),
+  });
+
+  const editForm = useForm<z.infer<typeof editSchema>>({
+    resolver: zodResolver(editSchema),
+  });
+
+  const MODULES = [
+    { key: 'clients', label: 'Clientes' },
+    { key: 'invoices', label: 'Facturación' },
+    { key: 'afip', label: 'AFIP' },
+    { key: 'audit', label: 'Auditoría' },
+    { key: 'dashboard', label: 'Dashboard' },
+    { key: 'documents', label: 'Documentos' },
+  ];
 
   const saveAfipMutation = useMutation({
     mutationFn: (data: z.infer<typeof afipSchema>) =>
@@ -223,17 +292,21 @@ const AdminPanel: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-4 px-4">
-                          <button
-                            onClick={() => {
-                              if (confirm(`¿Eliminar el estudio "${t.razonSocial}"? Esta acción no se puede deshacer.`)) {
-                                deleteTenantMutation.mutate(String(t.id));
-                              }
-                            }}
-                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                            title="Eliminar estudio"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          <div className="flex items-center space-x-1">
+                            <button onClick={() => handleEditTenant(String(t.id))}
+                              className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Editar">
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`¿Eliminar el estudio "${t.razonSocial}"? Esta acción no se puede deshacer.`)) {
+                                  deleteTenantMutation.mutate(String(t.id));
+                                }
+                              }}
+                              className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Eliminar">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -299,6 +372,69 @@ const AdminPanel: React.FC = () => {
                       </button>
                     </div>
                   </form>
+                )}
+              </div>
+            </div>
+          )}
+          {/* Edit Tenant Modal */}
+          {editTenantId && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-gray-900">Editar Estudio</h2>
+                  <button onClick={() => setEditTenantId(null)} className="p-2 hover:bg-gray-100 rounded-lg"><X size={20} /></button>
+                </div>
+                {editLoading ? (
+                  <div className="p-12 text-center text-gray-500">Cargando...</div>
+                ) : (
+                  <div className="p-6 space-y-6">
+                    <form onSubmit={editForm.handleSubmit((data) => editTenantMutation.mutate({ id: editTenantId, data }))} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Razón Social *</label>
+                        <input {...editForm.register('razonSocial')} className="input-field" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">CUIT *</label>
+                        <input {...editForm.register('cuit')} className="input-field" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Contacto</label>
+                        <input {...editForm.register('emailContacto')} className="input-field" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Activo</span>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" {...editForm.register('activo')} />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                        </label>
+                      </div>
+                      <button type="submit" disabled={editTenantMutation.isPending} className="btn-primary w-full">
+                        {editTenantMutation.isPending ? 'Guardando...' : 'Guardar datos'}
+                      </button>
+                    </form>
+
+                    <div className="border-t border-gray-200 pt-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Módulos de Suscripción</h3>
+                      <div className="space-y-2">
+                        {MODULES.map((mod) => (
+                          <div key={mod.key} className="flex items-center justify-between py-2 border-b border-gray-100">
+                            <span className="text-sm text-gray-700">{mod.label}</span>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input type="checkbox" className="sr-only peer"
+                                checked={!!editSubModules[mod.key]}
+                                onChange={(e) => {
+                                  const active = e.target.checked;
+                                  setEditSubModules(prev => ({ ...prev, [mod.key]: active }));
+                                  updateSubMutation.mutate({ id: editTenantId, moduleName: mod.key, active });
+                                }}
+                              />
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-primary-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

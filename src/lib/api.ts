@@ -98,8 +98,12 @@ export const feesApi = {
 export const adminApi = {
   getTenants: () =>
     api.get('/api/v1/admin/tenants'),
+  getTenant: (id: string) =>
+    api.get(`/api/v1/admin/tenants/${id}`),
   createTenant: (data: any) =>
     api.post('/api/v1/admin/tenants', data),
+  updateTenant: (id: string, data: any) =>
+    api.put(`/api/v1/admin/tenants/${id}`, data),
   updateAfipConfig: (id: string, data: any) =>
     api.put(`/api/v1/admin/tenants/${id}/afip-config`, data),
   uploadCert: (id: string, formData: FormData) =>
@@ -110,6 +114,8 @@ export const adminApi = {
     api.put(`/api/v1/admin/tenants/${id}/mp-config`, data),
   deleteTenant: (id: string) =>
     api.delete(`/api/v1/admin/tenants/${id}`),
+  updateSubscription: (id: string, data: any) =>
+    api.put(`/api/v1/admin/tenants/${id}/subscription`, data),
 };
 
 export const tenantApi = {
