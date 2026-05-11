@@ -104,6 +104,8 @@ export const adminApi = {
     api.post('/api/v1/admin/tenants', data),
   updateTenant: (id: string, data: any) =>
     api.put(`/api/v1/admin/tenants/${id}`, data),
+  getAfipConfig: (id: string) =>
+    api.get(`/api/v1/admin/tenants/${id}/afip-config`),
   updateAfipConfig: (id: string, data: any) =>
     api.put(`/api/v1/admin/tenants/${id}/afip-config`, data),
   uploadCert: (id: string, formData: FormData) =>

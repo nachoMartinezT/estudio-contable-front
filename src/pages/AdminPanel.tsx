@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,7 +20,7 @@ const tenantSchema = z.object({
 });
 
 const afipSchema = z.object({
-  afipCuit: z.string().optional(),
+  afipCuit: z.string().min(1, 'CUIT emisor requerido'),
   afipCertPassword: z.string().optional(),
   afipHomologacion: z.boolean().optional(),
 });
@@ -197,6 +197,25 @@ const AdminPanel: React.FC = () => {
   const mpForm = useForm<z.infer<typeof mpSchema>>({
     defaultValues: { mpEnabled: false },
   });
+
+  useEffect(() => {
+    if (!selectedTenantAfip) return;
+    adminApi.getAfipConfig(selectedTenantAfip)
+      .then((res) => {
+        afipForm.reset({
+          afipCuit: res.data.afipCuit || '',
+          afipCertPassword: res.data.afipCertPassword || '',
+          afipHomologacion: res.data.afipHomologacion ?? false,
+        });
+      })
+      .catch(() => {
+        afipForm.reset({
+          afipCuit: '',
+          afipCertPassword: '',
+          afipHomologacion: false,
+        });
+      });
+  }, [selectedTenantAfip, afipForm]);
 
   const handleCopyPassword = () => {
     navigator.clipboard.writeText(tempPassword);
@@ -466,6 +485,7 @@ const AdminPanel: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">CUIT Emisor</label>
                 <input type="text" {...afipForm.register('afipCuit')} className="input-field max-w-md" placeholder="30-12345678-9" />
+                {afipForm.formState.errors.afipCuit && <p className="mt-1 text-sm text-red-600">{afipForm.formState.errors.afipCuit.message}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password del certificado</label>
