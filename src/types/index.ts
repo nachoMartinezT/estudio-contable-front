@@ -100,10 +100,34 @@ export interface Factura {
   clienteNombre?: string;
   total: number;
   estado: string;
+  estadoAfip?: string;
   cae?: string;
   vencimientoCae?: string;
+  nroComprobanteAfip?: number;
   tipoComprobante?: number;
   puntoVenta?: number;
+  concepto?: number;
+  tipoDocumento?: number;
+  numeroDocumento?: number;
+  nombreCliente?: string;
+  condicionIvaReceptorId?: number;
+  monedaId?: string;
+  monedaCotiz?: number;
+  fechaServicioDesde?: string;
+  fechaServicioHasta?: string;
+  fechaVencimientoPago?: string;
+  impTotal?: number;
+  impNeto?: number;
+  impIVA?: number;
+  impTrib?: number;
+  impOpEx?: number;
+  impTotConc?: number;
+  items?: Array<{
+    concepto: string;
+    cantidad: number;
+    precioUnitario: number;
+    subtotal: number;
+  }>;
   tenantId: number | string;
   createdAt: string;
 }

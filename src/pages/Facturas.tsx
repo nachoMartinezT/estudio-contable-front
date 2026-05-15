@@ -8,7 +8,7 @@ import { invoicesApi, clientsApi } from '../lib/api';
 import { Factura, Cliente } from '../types';
 
 const invoiceSchema = z.object({
-  clientId: z.string({ required_error: 'Selecciona un cliente' }).min(1, 'Selecciona un cliente'),
+  clientId: z.coerce.number({ required_error: 'Selecciona un cliente' }).min(1, 'Selecciona un cliente'),
   numeroFactura: z.string().optional(),
   fechaEmision: z.string().min(1, 'Fecha requerida'),
   tipoComprobante: z.coerce.number().min(1, 'Tipo requerido'),
@@ -20,6 +20,13 @@ const invoiceSchema = z.object({
   condicionIvaReceptorId: z.coerce.number().min(1, 'Condicion IVA requerida'),
   monedaId: z.string().min(1, 'Moneda requerida'),
   monedaCotiz: z.coerce.number().min(0.01, 'Cotizacion requerida'),
+  fechaServicioDesde: z.string().optional(),
+  fechaServicioHasta: z.string().optional(),
+  fechaVencimientoPago: z.string().optional(),
+  impTotConc: z.coerce.number().min(0, 'No puede ser negativo').optional(),
+  impOpEx: z.coerce.number().min(0, 'No puede ser negativo').optional(),
+  impTrib: z.coerce.number().min(0, 'No puede ser negativo').optional(),
+  impIVA: z.coerce.number().min(0, 'No puede ser negativo').optional(),
   items: z.array(z.object({
     concepto: z.string().min(1, 'Descripcion requerida'),
     cantidad: z.number({ required_error: 'Cantidad requerida' }).min(1, 'Minimo 1'),
@@ -164,6 +171,13 @@ const Facturas: React.FC = () => {
       condicionIvaReceptorId: 5,
       monedaId: 'PES',
       monedaCotiz: 1,
+      fechaServicioDesde: '',
+      fechaServicioHasta: '',
+      fechaVencimientoPago: '',
+      impTotConc: 0,
+      impOpEx: 0,
+      impTrib: 0,
+      impIVA: 0,
       items: [{ concepto: '', cantidad: 1, precioUnitario: 0 }],
       emitirAfip: false,
     },
@@ -173,17 +187,35 @@ const Facturas: React.FC = () => {
 
   const items = createForm.watch('items');
   const watchClientId = createForm.watch('clientId');
-  const totalFactura = items?.reduce((sum, item) => sum + ((item.cantidad || 0) * (item.precioUnitario || 0)), 0) || 0;
+  const watchCondicionIva = createForm.watch('condicionIvaReceptorId');
+  const watchTipoComprobante = createForm.watch('tipoComprobante');
+
+  const subtotalItems = items?.reduce((sum, item) => sum + ((item.cantidad || 0) * (item.precioUnitario || 0)), 0) || 0;
+  const impIVA = createForm.watch('impIVA') || 0;
+  const impTrib = createForm.watch('impTrib') || 0;
+  const impOpEx = createForm.watch('impOpEx') || 0;
+  const impTotConc = createForm.watch('impTotConc') || 0;
+  const totalFactura = subtotalItems + impIVA + impTrib + impOpEx + impTotConc;
 
   React.useEffect(() => {
     if (watchClientId && clients) {
-      const client = clients.find(c => String(c.id) === String(watchClientId));
+      const client = clients.find(c => Number(c.id) === Number(watchClientId));
       if (client) {
         createForm.setValue('nombreCliente', client.razonSocial);
         createForm.setValue('numeroDocumento', Number(client.cuit?.replace(/-/g, '')) || 0);
       }
     }
   }, [watchClientId, clients, createForm]);
+
+  React.useEffect(() => {
+    const tieneIva = watchTipoComprobante === 1 || watchTipoComprobante === 2 || watchTipoComprobante === 3;
+    if (tieneIva) {
+      const ivaCalculado = Number((subtotalItems * 0.21).toFixed(2));
+      createForm.setValue('impIVA', ivaCalculado, { shouldValidate: false });
+    } else {
+      createForm.setValue('impIVA', 0, { shouldValidate: false });
+    }
+  }, [subtotalItems, watchTipoComprobante, createForm]);
 
   const filteredFacturas = facturas?.filter(factura => {
     const nombre = clientsMap[String(factura.clientId)] || '';
@@ -566,6 +598,21 @@ const Facturas: React.FC = () => {
                     <input type="number" step="0.01" {...createForm.register('monedaCotiz', { valueAsNumber: true })} className="input-field" />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Servicio Desde</label>
+                    <input type="date" {...createForm.register('fechaServicioDesde')} className="input-field" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Servicio Hasta</label>
+                    <input type="date" {...createForm.register('fechaServicioHasta')} className="input-field" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Vto. Pago</label>
+                    <input type="date" {...createForm.register('fechaVencimientoPago')} className="input-field" />
+                  </div>
+                </div>
               </div>
 
               <div className="mt-4">
@@ -615,6 +662,45 @@ const Facturas: React.FC = () => {
                 {createForm.formState.errors.items && (
                   <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.items.message || 'Error en los items'}</p>
                 )}
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Importes AFIP</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Subtotal Items</label>
+                    <input type="number" step="0.01" value={subtotalItems} disabled className="input-field bg-gray-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">IVA</label>
+                    <input type="number" step="0.01" {...createForm.register('impIVA', { valueAsNumber: true })} className="input-field" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tributos</label>
+                    <input type="number" step="0.01" {...createForm.register('impTrib', { valueAsNumber: true })} className="input-field" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Op. Exentas</label>
+                    <input type="number" step="0.01" {...createForm.register('impOpEx', { valueAsNumber: true })} className="input-field" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">No Gravado</label>
+                    <input type="number" step="0.01" {...createForm.register('impTotConc', { valueAsNumber: true })} className="input-field" />
+                  </div>
+                  <div className="col-span-3 flex items-end justify-end">
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">Subtotal: {formatCurrency(subtotalItems)}</p>
+                      <p className="text-sm text-gray-500">IVA: {formatCurrency(impIVA)}</p>
+                      {(impTrib > 0 || impOpEx > 0 || impTotConc > 0) && (
+                        <p className="text-sm text-gray-500">
+                          Otros: {formatCurrency(impTrib + impOpEx + impTotConc)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center pt-4 border-t border-gray-200">

@@ -161,9 +161,10 @@ export const pdfApi = {
 };
 
 export const afipApi = {
-  testConnection: () => api.get('/api/v1/afip/test'),
-  obtenerUltimoComprobante: (puntoVenta: number, tipoComprobante: string) =>
-    api.get(`/api/v1/afip/ultimo-comprobante/${puntoVenta}/${tipoComprobante}`),
+  testConnection: (tenantId: number) =>
+    api.post('/api/afip/test-token', { tenantId }),
+  obtenerUltimoComprobante: (tenantId: number, puntoVenta: number, tipoComprobante: number) =>
+    api.post(`/api/afip/ultimo-comprobante?puntoVenta=${puntoVenta}&tipoComprobante=${tipoComprobante}`, { tenantId }),
 };
 
 export default api;
