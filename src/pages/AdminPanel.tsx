@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard, Trash2, Edit, KeyRound } from 'lucide-react';
+import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard, Trash2, Edit, KeyRound, RotateCcw, UserX } from 'lucide-react';
 import { adminApi } from '../lib/api';
 import { Tenant } from '../types';
 
@@ -51,10 +51,11 @@ const AdminPanel: React.FC = () => {
   const [selectedTenantMp, setSelectedTenantMp] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showInactiveTenants, setShowInactiveTenants] = useState(false);
 
   const { data: tenants, isLoading } = useQuery<Tenant[]>({
-    queryKey: ['adminTenants'],
-    queryFn: () => adminApi.getTenants().then((res) => res.data),
+    queryKey: ['adminTenants', showInactiveTenants],
+    queryFn: () => adminApi.getTenants(!showInactiveTenants).then((res) => res.data),
   });
 
   const createTenantMutation = useMutation({
@@ -93,6 +94,18 @@ const AdminPanel: React.FC = () => {
     },
     onError: (err: any) => {
       setErrorMsg(err.response?.data?.error || 'Error al regenerar contraseña');
+    },
+  });
+
+  const reactivateTenantMutation = useMutation({
+    mutationFn: (id: string) => adminApi.reactivateTenant(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminTenants'] });
+      setSuccessMsg('Estudio reactivado exitosamente');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.error || 'Error al reactivar estudio');
     },
   });
 
@@ -314,11 +327,20 @@ const AdminPanel: React.FC = () => {
       {/* Tab: Estudios */}
       {activeTab === TAB_ESTUDIOS && (
         <div className="space-y-4">
-          <div className="flex justify-end">
-            <button onClick={() => { setShowCreateModal(true); setTempPassword(''); setErrorMsg(''); }} className="btn-primary flex items-center space-x-2">
-              <Plus size={20} />
-              <span>Nuevo estudio</span>
+          <div className="flex justify-between items-center">
+            <button
+              onClick={() => setShowInactiveTenants(!showInactiveTenants)}
+              className={`btn-secondary flex items-center space-x-2 ${showInactiveTenants ? 'bg-orange-50 text-orange-700 border-orange-200' : ''}`}
+            >
+              <UserX size={20} />
+              <span>{showInactiveTenants ? 'Ver Activos' : 'Ver Inactivos'}</span>
             </button>
+            {!showInactiveTenants && (
+              <button onClick={() => { setShowCreateModal(true); setTempPassword(''); setErrorMsg(''); }} className="btn-primary flex items-center space-x-2">
+                <Plus size={20} />
+                <span>Nuevo estudio</span>
+              </button>
+            )}
           </div>
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
@@ -354,32 +376,47 @@ const AdminPanel: React.FC = () => {
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex items-center space-x-1">
-                            <button onClick={() => handleEditTenant(String(t.id))}
-                              className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Editar">
-                              <Edit size={16} />
-                            </button>
-                            {t.adminUserId && (
+                            {t.activo !== false ? (
+                              <>
+                                <button onClick={() => handleEditTenant(String(t.id))}
+                                  className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Editar">
+                                  <Edit size={16} />
+                                </button>
+                                {t.adminUserId && (
+                                  <button
+                                    onClick={() => {
+                                      if (confirm(`¿Regenerar la contraseña del administrador de "${t.razonSocial}"?`)) {
+                                        setResetPasswordUserId(String(t.adminUserId));
+                                        resetPasswordMutation.mutate(String(t.adminUserId));
+                                      }
+                                    }}
+                                    disabled={resetPasswordMutation.isPending && resetPasswordUserId === String(t.adminUserId)}
+                                    className="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg disabled:opacity-50" title="Regenerar contraseña del admin">
+                                    <KeyRound size={16} />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`¿Deshabilitar el estudio "${t.razonSocial}"? Podras reactivarlo mas tarde.`)) {
+                                      deleteTenantMutation.mutate(String(t.id));
+                                    }
+                                  }}
+                                  className="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg" title="Deshabilitar">
+                                  <UserX size={16} />
+                                </button>
+                              </>
+                            ) : (
                               <button
                                 onClick={() => {
-                                  if (confirm(`¿Regenerar la contraseña del administrador de "${t.razonSocial}"?`)) {
-                                    setResetPasswordUserId(String(t.adminUserId));
-                                    resetPasswordMutation.mutate(String(t.adminUserId));
+                                  if (confirm(`¿Reactivar el estudio "${t.razonSocial}"?`)) {
+                                    reactivateTenantMutation.mutate(String(t.id));
                                   }
                                 }}
-                                disabled={resetPasswordMutation.isPending && resetPasswordUserId === String(t.adminUserId)}
-                                className="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg disabled:opacity-50" title="Regenerar contraseña del admin">
-                                <KeyRound size={16} />
+                                disabled={reactivateTenantMutation.isPending}
+                                className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg disabled:opacity-50" title="Reactivar">
+                                <RotateCcw size={16} />
                               </button>
                             )}
-                            <button
-                              onClick={() => {
-                                if (confirm(`¿Eliminar el estudio "${t.razonSocial}"? Esta acción no se puede deshacer.`)) {
-                                  deleteTenantMutation.mutate(String(t.id));
-                                }
-                              }}
-                              className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Eliminar">
-                              <Trash2 size={16} />
-                            </button>
                           </div>
                         </td>
                       </tr>

@@ -44,10 +44,12 @@ export const authApi = {
 export const clientsApi = {
   getAll: (params?: { page?: number; limit?: number; search?: string }) =>
     api.get('/api/v1/clients', { params }),
+  getInactive: () => api.get('/api/v1/clients/inactive'),
   getById: (id: string) => api.get(`/api/v1/clients/${id}`),
   create: (data: any) => api.post('/api/v1/clients', data),
   update: (id: string, data: any) => api.put(`/api/v1/clients/${id}`, data),
   delete: (id: string) => api.delete(`/api/v1/clients/${id}`),
+  reactivate: (id: string) => api.post(`/api/v1/clients/${id}/reactivate`),
 };
 
 export const invoicesApi = {
@@ -102,8 +104,8 @@ export const feesApi = {
 };
 
 export const adminApi = {
-  getTenants: () =>
-    api.get('/api/v1/admin/tenants'),
+  getTenants: (activo = true) =>
+    api.get('/api/v1/admin/tenants', { params: { activo } }),
   getTenant: (id: string) =>
     api.get(`/api/v1/admin/tenants/${id}`),
   createTenant: (data: any) =>
@@ -122,6 +124,8 @@ export const adminApi = {
     api.put(`/api/v1/admin/tenants/${id}/mp-config`, data),
   deleteTenant: (id: string) =>
     api.delete(`/api/v1/admin/tenants/${id}`),
+  reactivateTenant: (id: string) =>
+    api.post(`/api/v1/admin/tenants/${id}/reactivate`),
   updateSubscription: (id: string, data: any) =>
     api.put(`/api/v1/admin/tenants/${id}/subscription`, data),
   resetUserPassword: (id: string) =>

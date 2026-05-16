@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Edit, Trash2, Eye, RotateCcw, UserX } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsApi } from '../lib/api';
 import { Cliente } from '../types';
@@ -9,15 +9,23 @@ const Clientes: React.FC = () => {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
+  const [showInactive, setShowInactive] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: clientes, isLoading } = useQuery<Cliente[]>({
-    queryKey: ['clientes'],
-        queryFn: () => clientsApi.getAll().then(res => res.data),
+    queryKey: ['clientes', showInactive],
+    queryFn: () => showInactive ? clientsApi.getInactive().then(res => res.data) : clientsApi.getAll().then(res => res.data),
   });
 
   const deleteMutation = useMutation({
-        mutationFn: (id: string) => clientsApi.delete(id),
+    mutationFn: (id: string) => clientsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+    },
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: (id: string) => clientsApi.reactivate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
     },
@@ -34,9 +42,15 @@ const Clientes: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este cliente?')) {
+  const handleDeactivate = (id: string) => {
+    if (confirm('¿Estas seguro de deshabilitar este cliente? Podras reactivarlo mas tarde.')) {
       deleteMutation.mutate(id);
+    }
+  };
+
+  const handleReactivate = (id: string) => {
+    if (confirm('¿Reactivar este cliente?')) {
+      reactivateMutation.mutate(id);
     }
   };
 
@@ -83,23 +97,20 @@ const Clientes: React.FC = () => {
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
-        <button className="btn-secondary flex items-center space-x-2">
-          <Filter size={20} />
-          <span>Filtrar</span>
+        <button
+          onClick={() => setShowInactive(!showInactive)}
+          className={`btn-secondary flex items-center space-x-2 ${showInactive ? 'bg-orange-50 text-orange-700 border-orange-200' : ''}`}
+        >
+          <UserX size={20} />
+          <span>{showInactive ? 'Ver Activos' : 'Ver Inactivos'}</span>
         </button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Total Clientes</p>
+          <p className="text-sm text-gray-500">{showInactive ? 'Clientes Inactivos' : 'Total Clientes'}</p>
           <p className="text-2xl font-bold text-gray-900">{filteredClientes?.length || 0}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Clientes Activos</p>
-          <p className="text-2xl font-bold text-gray-900">
-            {filteredClientes?.filter(c => c.estado === 'ACTIVO').length || 0}
-          </p>
         </div>
       </div>
 
@@ -147,23 +158,34 @@ const Clientes: React.FC = () => {
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleEdit(cliente)}
-                          className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
-                          title="Editar"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(cliente.id)}
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                          title="Eliminar"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                        <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-                          <MoreVertical size={16} />
-                        </button>
+                        {cliente.estado === 'ACTIVO' ? (
+                          <>
+                            <button
+                              onClick={() => handleEdit(cliente)}
+                              className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
+                              title="Editar"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeactivate(cliente.id)}
+                              disabled={deleteMutation.isPending}
+                              className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg disabled:opacity-50"
+                              title="Deshabilitar"
+                            >
+                              <UserX size={16} />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleReactivate(cliente.id)}
+                            disabled={reactivateMutation.isPending}
+                            className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg disabled:opacity-50"
+                            title="Restaurar"
+                          >
+                            <RotateCcw size={16} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
