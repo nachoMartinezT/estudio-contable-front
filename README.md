@@ -17,54 +17,109 @@ Frontend moderno para el sistema de gestión contable Guida Contable SaaS, const
 ```
 src/
 ├── components/          # Componentes reutilizables
-│   ├── Auth/           # Componentes de autenticación
-│   ├── Clientes/       # Componentes de gestión de clientes
-│   └── Layout/         # Componentes de layout (Sidebar, Header)
-├── hooks/              # Custom hooks
+│   ├── Auth/           # Login, registro, rutas protegidas
+│   ├── Clientes/       # Formulario modal de cliente
+│   └── Layout/         # Sidebar, Header, Layout principal
+├── hooks/              # Custom hooks (useAuth)
 ├── lib/                # Utilidades y configuración
+│   └── api.ts          # Cliente Axios + endpoints de todos los servicios
 ├── pages/              # Páginas principales
-├── providers/          # Proveedores de contexto
-├── types/              # Definiciones de TypeScript
-└── App.tsx             # Componente principal
+│   ├── Dashboard.tsx
+│   ├── Clientes.tsx
+│   ├── Facturas.tsx
+│   ├── CuentaCorriente.tsx
+│   ├── HonorariosRecurrentes.tsx
+│   ├── Empleados.tsx
+│   ├── MisDocumentos.tsx
+│   ├── MiCuenta.tsx
+│   ├── PDFGenerator.tsx
+│   ├── Auditoria.tsx
+│   ├── Configuracion.tsx
+│   └── AdminPanel.tsx
+├── providers/          # Proveedores de contexto (React Query)
+├── types/              # Definiciones TypeScript (User, Cliente, Factura, etc.)
+└── App.tsx             # Routing principal con guards por rol
 ```
 
 ## 🎨 Módulos Implementados
 
 ### 1. **Dashboard**
-- Estadísticas generales
-- Gráficos de ingresos
-- Actividad reciente
-- Acciones rápidas
+- Estadísticas generales (clientes, facturación, movimientos)
+- Actividad reciente desde API
+- Acciones rápidas con navegación
 
 ### 2. **Gestión de Clientes**
 - CRUD completo de clientes
-- Validación de CUIT/DNI
+- Validación de CUIT
 - Filtros y búsqueda
 - Estados (Activo/Inactivo)
+- Sincronización automática de honorarios recurrentes
 
 ### 3. **Facturación**
-- Listado de facturas
-- Emisión de facturas
-- Estados (Pendiente/Pagada/Anulada)
-- Integración AFIP
+- Listado de facturas con filtros por estado
+- Creación de facturas con items dinámicos
+- Emisión oficial en AFIP (Factura A/B/C)
+- Cálculo automático de IVA 21% para Factura A
+- Campos AFIP completos: tipo comprobante, punto de venta, concepto, fechas de servicio, importes (IVA, tributos, exentas, no gravado)
+- Estados: Borrador / Emitida AFIP / Pagada / Anulada
+- Anulación de borradores
 
-### 4. **Generador de PDF**
-- Facturas PDF
+### 4. **Cuenta Corriente**
+- Selector de cliente con búsqueda
+- Balance y saldo en tiempo real
+- Movimientos con filtros (cargos, pagos, honorarios)
+- Registro de pagos manuales
+- Generación de cargos manuales
+- Links de pago MercadoPago
+- Exportación a PDF y Excel
+
+### 5. **Honorarios Recurrentes**
+- Configuración de honorario mensual por cliente
+- Gestión de overrides (ajustes por mes)
+- Generación masiva de honorarios del mes
+- Prevención de duplicados
+
+### 6. **Empleados (STAFF)**
+- Listado de empleados del estudio
+- Creación con generación de password temporal
+- Permisos granulares por empleado (clientes, facturas, documentos, dashboard)
+
+### 7. **Documentos**
+- Subida de archivos con categorías (PDF, imágenes, Excel, Word)
+- Descarga directa
+- Eliminación
+- Filtro por categoría
+
+### 8. **Mi Cuenta (Clientes)**
+- Vista exclusiva para clientes (rol CLIENT)
+- Balance y movimientos propios
+- Descarga de facturas en PDF
+- Links de pago MercadoPago
+
+### 9. **Generador de PDF**
+- Generación de facturas PDF
 - Presupuestos
 - Reportes personalizados
-- Plantillas configurables
 
-### 5. **Auditoría**
-- Registro completo de acciones
-- Filtros por usuario/acción/entidad
-- Exportación de logs
-- Timeline interactivo
+### 10. **Auditoría**
+- Registro de acciones del sistema
+- Filtros por usuario, acción y entidad
+- Paginación real
+- Estadísticas (hoy, usuarios activos, acciones críticas)
 
-### 6. **Configuración**
-- Datos de empresa
-- Configuración de facturación
-- Seguridad y permisos
-- Integraciones (AFIP)
+### 11. **Configuración**
+- Datos de la empresa (razón social, CUIT, email)
+- Defaults de facturación (punto de venta, IVA, moneda)
+- Preferencias de notificaciones
+- Enlaces a configuración AFIP y MercadoPago
+
+### 12. **Administración SaaS (Super Admin)**
+- Panel exclusivo para SUPER_ADMIN
+- CRUD de estudios (tenants)
+- Configuración AFIP por tenant (certificado .p12, CUIT, password, homologación)
+- Configuración MercadoPago por tenant
+- Gestión de módulos por tenant
+- Estadísticas globales de la plataforma
 
 ## 🔧 Configuración
 
@@ -125,13 +180,21 @@ npm run lint         # Linter
 
 ### Endpoints Consumidos
 ```
-/auth/login           # Autenticación
-/auth/register        # Registro
-/clientes/*           # Gestión de clientes
-/facturas/*           # Facturación
-/pdf/*                # Generación PDF
-/audit/*              # Auditoría
-/afip/*               # Integración AFIP
+/api/v1/auth/login              # Autenticación JWT
+/api/v1/auth/me                 # Perfil del usuario
+/api/v1/clients/*               # Gestión de clientes
+/api/v1/invoices/*              # Facturación (crear, listar, emitir AFIP, anular)
+/api/v1/ledger/*                # Cuenta corriente, balance, pagos, honorarios
+/api/v1/fees/*                  # Honorarios recurrentes
+/api/v1/documents/*             # Gestión de documentos
+/api/v1/dashboard/*             # Estadísticas
+/api/v1/audit/*                 # Auditoría
+/api/afip/*                     # Integración AFIP (test-token, ultimo-comprobante, emitir)
+/api/v1/tenants/*               # Gestión de empleados y permisos STAFF
+/api/v1/tenants/me              # Configuración del tenant actual
+/api/v1/admin/*                 # Administración SaaS (SUPER_ADMIN)
+/api/v1/reports/*               # Reportes PDF/Excel
+/api/v1/pdf/*                   # Generación de documentos PDF
 ```
 
 ### Configuración API

@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, FileText, TrendingUp, DollarSign, AlertCircle, Calendar } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardApi } from '../lib/api';
 import { DashboardStats } from '../types';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
     queryFn: () => dashboardApi.getStats().then(res => res.data),
@@ -146,19 +148,19 @@ const Dashboard: React.FC = () => {
       <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Acciones Rápidas</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
+          <button onClick={() => navigate('/facturas')} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-blue-50 rounded-lg">
                 <FileText className="text-blue-600" size={20} />
               </div>
               <div>
                 <p className="font-medium text-gray-900">Nueva Factura</p>
-                <p className="text-sm text-gray-500">Crear factura rápidamente</p>
+                <p className="text-sm text-gray-500">Crear factura rapidamente</p>
               </div>
             </div>
           </button>
-          
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
+
+          <button onClick={() => navigate('/clientes')} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-green-50 rounded-lg">
                 <Users className="text-green-600" size={20} />
@@ -169,8 +171,8 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </button>
-          
-          <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left">
+
+          <button onClick={() => navigate('/reportes')} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition-colors">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-purple-50 rounded-lg">
                 <TrendingUp className="text-purple-600" size={20} />

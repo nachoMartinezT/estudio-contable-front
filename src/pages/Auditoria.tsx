@@ -7,20 +7,26 @@ import { AuditLog } from '../types';
 const Auditoria: React.FC = () => {
   const [search, setSearch] = useState('');
   const [filterAccion, setFilterAccion] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
 
-  const { data: logs, isLoading } = useQuery<AuditLog[]>({
-    queryKey: ['audit-logs'],
-    queryFn: () => auditApi.getLogs().then(res => res.data),
+  const { data: logsResponse, isLoading } = useQuery({
+    queryKey: ['audit-logs', page, limit],
+    queryFn: () => auditApi.getLogs({ page: page - 1, limit }).then(res => res.data),
   });
 
+  const logs: AuditLog[] = Array.isArray(logsResponse) ? logsResponse : (logsResponse?.content || []);
+  const totalElements = logsResponse?.totalElements || logs?.length || 0;
+  const totalPages = Math.max(1, Math.ceil(totalElements / limit));
+
   const filteredLogs = logs?.filter(log => {
-    const matchesSearch = 
+    const matchesSearch =
       log.usuarioNombre.toLowerCase().includes(search.toLowerCase()) ||
       log.accion.toLowerCase().includes(search.toLowerCase()) ||
       log.entidad.toLowerCase().includes(search.toLowerCase());
-    
+
     const matchesAccion = !filterAccion || log.accion === filterAccion;
-    
+
     return matchesSearch && matchesAccion;
   });
 
@@ -217,16 +223,37 @@ const Auditoria: React.FC = () => {
         {/* Pagination */}
         <div className="mt-8 flex items-center justify-between pt-6 border-t border-gray-200">
           <div className="text-sm text-gray-500">
-            Mostrando {filteredLogs?.length || 0} de {logs?.length || 0} registros
+            Mostrando {filteredLogs?.length || 0} de {totalElements} registros
           </div>
           <div className="flex items-center space-x-2">
-            <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Anterior
             </button>
-            <span className="px-3 py-1 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium">
-              1
-            </span>
-            <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const pageNum = i + 1;
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setPage(pageNum)}
+                  className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                    page === pageNum
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Siguiente
             </button>
           </div>

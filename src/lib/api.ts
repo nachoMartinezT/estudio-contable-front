@@ -131,6 +131,10 @@ export const tenantApi = {
     api.get(`/api/v1/tenants/${tenantId}/users/${userId}/permissions`),
   updatePermissions: (tenantId: string, userId: string, data: any) =>
     api.put(`/api/v1/tenants/${tenantId}/users/${userId}/permissions`, data),
+  getMyConfig: () =>
+    api.get('/api/v1/tenants/me'),
+  updateMyConfig: (data: any) =>
+    api.put('/api/v1/tenants/me', data),
 };
 
 export const auditApi = {
