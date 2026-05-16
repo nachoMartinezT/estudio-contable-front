@@ -76,6 +76,7 @@ export interface Tenant {
   emailContacto: string;
   activo: boolean;
   createdAt: string;
+  adminUserId?: number;
 }
 
 export interface Cliente {

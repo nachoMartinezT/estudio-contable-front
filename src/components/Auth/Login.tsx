@@ -104,9 +104,13 @@ const Login: React.FC = () => {
                   Recordarme
                 </label>
               </div>
-              <a href="#" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              <button
+                type="button"
+                onClick={() => navigate('/forgot-password')}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
                 ¿Olvidaste tu contraseña?
-              </a>
+              </button>
             </div>
 
             <button

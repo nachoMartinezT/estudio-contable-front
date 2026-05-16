@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard, Trash2, Edit } from 'lucide-react';
+import { Plus, Upload, X, Copy, Check, AlertCircle, Building2, Shield, CreditCard, Trash2, Edit, KeyRound } from 'lucide-react';
 import { adminApi } from '../lib/api';
 import { Tenant } from '../types';
 
@@ -78,6 +78,21 @@ const AdminPanel: React.FC = () => {
     },
     onError: (err: any) => {
       setErrorMsg(err.response?.data?.message || 'Error al eliminar estudio');
+    },
+  });
+
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null);
+  const [resetTempPassword, setResetTempPassword] = useState('');
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (userId: string) => adminApi.resetUserPassword(userId),
+    onSuccess: (res) => {
+      setResetTempPassword(res.data?.tempPassword || '');
+      setSuccessMsg('Contraseña regenerada exitosamente');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.error || 'Error al regenerar contraseña');
     },
   });
 
@@ -251,6 +266,33 @@ const AdminPanel: React.FC = () => {
         </div>
       )}
 
+      {/* Modal: Contraseña regenerada */}
+      {resetTempPassword && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <p className="text-orange-800 font-medium mb-2">Contraseña regenerada</p>
+              <p className="text-sm text-orange-700 mb-3">Nueva contraseña temporal:</p>
+              <div className="flex items-center space-x-2">
+                <code className="flex-1 bg-white px-3 py-2 rounded border border-orange-300 text-lg font-mono text-center select-all">{resetTempPassword}</code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(resetTempPassword);
+                    setPasswordCopied(true);
+                    setTimeout(() => setPasswordCopied(false), 2000);
+                  }}
+                  className="p-2 bg-white hover:bg-gray-50 rounded-lg border border-gray-200"
+                  title="Copiar"
+                >
+                  {passwordCopied ? <Check size={18} className="text-green-600" /> : <Copy size={18} className="text-gray-500" />}
+                </button>
+              </div>
+            </div>
+            <button onClick={() => { setResetTempPassword(''); setResetPasswordUserId(null); }} className="btn-primary w-full mt-4">Cerrar</button>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         {TABS.map((tab) => (
@@ -316,6 +358,19 @@ const AdminPanel: React.FC = () => {
                               className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Editar">
                               <Edit size={16} />
                             </button>
+                            {t.adminUserId && (
+                              <button
+                                onClick={() => {
+                                  if (confirm(`¿Regenerar la contraseña del administrador de "${t.razonSocial}"?`)) {
+                                    setResetPasswordUserId(String(t.adminUserId));
+                                    resetPasswordMutation.mutate(String(t.adminUserId));
+                                  }
+                                }}
+                                disabled={resetPasswordMutation.isPending && resetPasswordUserId === String(t.adminUserId)}
+                                className="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg disabled:opacity-50" title="Regenerar contraseña del admin">
+                                <KeyRound size={16} />
+                              </button>
+                            )}
                             <button
                               onClick={() => {
                                 if (confirm(`¿Eliminar el estudio "${t.razonSocial}"? Esta acción no se puede deshacer.`)) {

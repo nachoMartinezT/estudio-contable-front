@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, X, Settings, Copy, Check, AlertCircle } from 'lucide-react';
+import { Plus, X, Settings, Copy, Check, AlertCircle, KeyRound } from 'lucide-react';
 import { tenantApi } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { User, StaffPermissions } from '../types';
@@ -33,6 +33,8 @@ const Empleados: React.FC = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [resetEmpPassword, setResetEmpPassword] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['tenantStaff'],
@@ -74,6 +76,19 @@ const Empleados: React.FC = () => {
       tenantApi.updatePermissions(tenantId, selectedEmployeeId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staffPermissions', tenantId, selectedEmployeeId] });
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: (userId: string) => tenantApi.resetStaffPassword(String(tenantId), userId),
+    onSuccess: (res) => {
+      setResetEmpPassword(res.data?.tempPassword || '');
+      setShowResetModal(true);
+      setSuccessMsg('Contraseña regenerada exitosamente');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.error || 'Error al regenerar contraseña');
     },
   });
 
@@ -161,13 +176,27 @@ const Empleados: React.FC = () => {
                       </div>
                     </td>
                     <td className="py-4 px-4">
-                      <button
-                        onClick={() => setSelectedEmployeeId(emp.id === selectedEmployeeId ? null : emp.id)}
-                        className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
-                        title="Configurar permisos"
-                      >
-                        <Settings size={16} />
-                      </button>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => setSelectedEmployeeId(emp.id === selectedEmployeeId ? null : emp.id)}
+                          className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
+                          title="Configurar permisos"
+                        >
+                          <Settings size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`¿Regenerar la contraseña de ${emp.nombre}?`)) {
+                              resetPasswordMutation.mutate(String(emp.id));
+                            }
+                          }}
+                          disabled={resetPasswordMutation.isPending}
+                          className="p-1.5 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg disabled:opacity-50"
+                          title="Regenerar contraseña"
+                        >
+                          <KeyRound size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -209,6 +238,33 @@ const Empleados: React.FC = () => {
                 ))
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <p className="text-orange-800 font-medium mb-2">Contraseña regenerada</p>
+              <p className="text-sm text-orange-700 mb-3">Nueva contraseña temporal del empleado:</p>
+              <div className="flex items-center space-x-2">
+                <code className="flex-1 bg-white px-3 py-2 rounded border border-orange-300 text-lg font-mono text-center select-all">{resetEmpPassword}</code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(resetEmpPassword);
+                    setPasswordCopied(true);
+                    setTimeout(() => setPasswordCopied(false), 2000);
+                  }}
+                  className="p-2 bg-white hover:bg-gray-50 rounded-lg border border-gray-200"
+                  title="Copiar"
+                >
+                  {passwordCopied ? <Check size={18} className="text-green-600" /> : <Copy size={18} className="text-gray-500" />}
+                </button>
+              </div>
+            </div>
+            <button onClick={() => { setShowResetModal(false); setResetEmpPassword(''); }} className="btn-primary w-full mt-4">Cerrar</button>
           </div>
         </div>
       )}

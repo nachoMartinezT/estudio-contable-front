@@ -33,6 +33,12 @@ export const authApi = {
   login: (data: { email: string; password: string }) =>
     api.post('/api/v1/auth/login', data),
   me: () => api.get('/api/v1/auth/me'),
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.post('/api/v1/auth/change-password', data),
+  forgotPassword: (data: { email: string }) =>
+    api.post('/api/v1/auth/forgot-password', data),
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    api.post('/api/v1/auth/reset-password', data),
 };
 
 export const clientsApi = {
@@ -118,6 +124,8 @@ export const adminApi = {
     api.delete(`/api/v1/admin/tenants/${id}`),
   updateSubscription: (id: string, data: any) =>
     api.put(`/api/v1/admin/tenants/${id}/subscription`, data),
+  resetUserPassword: (id: string) =>
+    api.post(`/api/v1/admin/users/${id}/reset-password`),
 };
 
 export const tenantApi = {
@@ -135,6 +143,8 @@ export const tenantApi = {
     api.get('/api/v1/tenants/me'),
   updateMyConfig: (data: any) =>
     api.put('/api/v1/tenants/me', data),
+  resetStaffPassword: (tenantId: string, userId: string) =>
+    api.post(`/api/v1/tenants/${tenantId}/users/${userId}/reset-password`),
 };
 
 export const auditApi = {

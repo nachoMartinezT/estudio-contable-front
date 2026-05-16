@@ -6,6 +6,8 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import RoleRoute from './components/Auth/RoleRoute';
 
 import Login from './components/Auth/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 import Layout from './components/Layout/Layout';
 
@@ -29,6 +31,8 @@ const App: React.FC = () => {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             <Route path="/" element={
               <ProtectedRoute>

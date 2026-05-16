@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Save, User, CreditCard, Shield, Bell, Globe, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { Save, User, CreditCard, Shield, Bell, Globe, CheckCircle, AlertTriangle, Loader2, Lock } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { tenantApi } from '../lib/api';
+import { tenantApi, authApi } from '../lib/api';
 
 const Configuracion: React.FC = () => {
   const queryClient = useQueryClient();
@@ -56,6 +56,35 @@ const Configuracion: React.FC = () => {
       setErrorMsg(err.response?.data?.error || 'Error al guardar configuracion');
     },
   });
+
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: { currentPassword: string; newPassword: string }) => authApi.changePassword(data),
+    onSuccess: () => {
+      setSuccessMsg('Contraseña actualizada correctamente');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setSuccessMsg(''), 4000);
+    },
+    onError: (err: any) => {
+      setErrorMsg(err.response?.data?.error || 'Error al cambiar contraseña');
+    },
+  });
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setErrorMsg('Las contraseñas no coinciden');
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      setErrorMsg('La nueva contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    changePasswordMutation.mutate({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+    });
+  };
 
   const handleChange = (section: string, field: string, value: any) => {
     setSettings(prev => ({
@@ -235,6 +264,61 @@ const Configuracion: React.FC = () => {
         <p className="text-sm text-gray-500 mt-4">
           Las notificaciones se envian a los emails configurados en cada cliente.
         </p>
+      </div>
+
+      {/* Cambiar Contraseña */}
+      <div className="card">
+        <div className="flex items-center space-x-3 mb-6">
+          <Lock className="text-red-600" size={20} />
+          <h2 className="text-xl font-semibold text-gray-900">Cambiar Contraseña</h2>
+        </div>
+        <form onSubmit={handleChangePassword} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña Actual</label>
+            <input
+              type="password"
+              value={passwordData.currentPassword}
+              onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+              className="input-field"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Nueva Contraseña</label>
+            <input
+              type="password"
+              value={passwordData.newPassword}
+              onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+              className="input-field"
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Confirmar Nueva Contraseña</label>
+            <input
+              type="password"
+              value={passwordData.confirmPassword}
+              onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+              className="input-field"
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+          </div>
+          <div className="md:col-span-3 flex justify-end">
+            <button
+              type="submit"
+              disabled={changePasswordMutation.isPending}
+              className="btn-secondary flex items-center space-x-2 disabled:opacity-50"
+            >
+              {changePasswordMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
+              <span>{changePasswordMutation.isPending ? 'Cambiando...' : 'Cambiar Contraseña'}</span>
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Integraciones */}
