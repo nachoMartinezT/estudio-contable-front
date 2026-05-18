@@ -270,6 +270,12 @@ const Facturas: React.FC = () => {
       impOpEx: Number(formData.get('impOpEx') || 0),
       impTotConc: Number(formData.get('impTotConc') || 0),
     };
+    const fDesde = formData.get('fechaServicioDesde');
+    const fHasta = formData.get('fechaServicioHasta');
+    const fVto = formData.get('fechaVencimientoPago');
+    if (fDesde) data.fechaServicioDesde = fDesde;
+    if (fHasta) data.fechaServicioHasta = fHasta;
+    if (fVto) data.fechaVencimientoPago = fVto;
     emitirMutation.mutate(data);
   };
 
@@ -425,10 +431,10 @@ const Facturas: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Concepto *</label>
-                  <select name="concepto" defaultValue={2} className="input-field" required>
+                  <select name="concepto" defaultValue={1} className="input-field" required>
                     {CONCEPTOS.map(c => (
                       <option key={c.value} value={c.value}>{c.label}</option>
                     ))}
@@ -441,6 +447,24 @@ const Facturas: React.FC = () => {
                       <option key={c.value} value={c.value}>{c.label}</option>
                     ))}
                   </select>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Fechas de Servicio (requerido para Servicios)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Servicio Desde</label>
+                    <input type="date" name="fechaServicioDesde" className="input-field text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Servicio Hasta</label>
+                    <input type="date" name="fechaServicioHasta" className="input-field text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Vto. Pago</label>
+                    <input type="date" name="fechaVencimientoPago" className="input-field text-sm" />
+                  </div>
                 </div>
               </div>
 
