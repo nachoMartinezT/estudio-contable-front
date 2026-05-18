@@ -265,6 +265,10 @@ const Facturas: React.FC = () => {
       condicionIvaReceptorId: Number(formData.get('condicionIvaReceptorId')),
       monedaId: formData.get('monedaId'),
       monedaCotiz: Number(formData.get('monedaCotiz')),
+      impIVA: Number(formData.get('impIVA') || 0),
+      impTrib: Number(formData.get('impTrib') || 0),
+      impOpEx: Number(formData.get('impOpEx') || 0),
+      impTotConc: Number(formData.get('impTotConc') || 0),
     };
     emitirMutation.mutate(data);
   };
@@ -472,6 +476,28 @@ const Facturas: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Cotizacion Moneda *</label>
                   <input type="number" name="monedaCotiz" defaultValue={1} step="0.01" min="0.01" className="input-field" required />
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Importes AFIP</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">IVA</label>
+                    <input type="number" name="impIVA" defaultValue={0} step="0.01" min="0" className="input-field text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Tributos</label>
+                    <input type="number" name="impTrib" defaultValue={0} step="0.01" min="0" className="input-field text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Op. Exentas</label>
+                    <input type="number" name="impOpEx" defaultValue={0} step="0.01" min="0" className="input-field text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">No Gravado</label>
+                    <input type="number" name="impTotConc" defaultValue={0} step="0.01" min="0" className="input-field text-sm" />
+                  </div>
                 </div>
               </div>
 
